@@ -49,27 +49,23 @@ end
 
 ## Dijkstra
 
-"""
-    grid_dijkstra(g, s)
-
-Apply Dijkstra's algorithm on an [`AbstractGridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
-"""
-function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer) where {T,R<:AbstractFloat}
+function grid_dijkstra!(
+    queue::Q, g::AbstractGridGraph{T,R}, s::Integer
+) where {Q,T,R<:AbstractFloat}
     @assert !has_negative_weights(g)
     dists = fill(typemax(R), nv(g))
     parents = zeros(T, nv(g))
-    Q = PriorityQueue{T,R}()
     dists[s] = zero(R)
-    enqueue!(Q, s, zero(R))
-    while !isempty(Q)
-        u = dequeue!(Q)
+    enqueue!(queue, s, zero(R))
+    while !isempty(queue)
+        u = dequeue!(queue)
         d_u = dists[u]
         for v in outneighbors(g, u)
             dist_through_u = d_u + get_weight(g, v)
             if dist_through_u < dists[v]
                 dists[v] = dist_through_u
                 parents[v] = u
-                Q[v] = dist_through_u
+                queue[v] = dist_through_u
             end
         end
     end
@@ -77,12 +73,42 @@ function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer) where {T,R<:Abstra
 end
 
 """
+    grid_dijkstra(g, s)
+
+Apply Dijkstra's algorithm on an [`AbstractGridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
+"""
+function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer) where {T,R}
+    queue = PriorityQueue{T,R}()
+    return grid_dijkstra!(queue, g, s)
+end
+
+"""
+    grid_fast_dijkstra(g, s)
+
+Same as [`grid_dijkstra(g, s)`](@ref) but with a vector priority queue, which can lead to better performance on small-ish graphs.
+"""
+function grid_fast_dijkstra(g::AbstractGridGraph{T,R}, s::Integer) where {T,R}
+    queue = VectorPriorityQueue{T,R}()
+    return grid_dijkstra!(queue, g, s)
+end
+
+"""
     grid_dijkstra(g, s, d)
 
 Apply Dijkstra's algorithm on an [`AbstractGridGraph`](@ref) `g`, and return a vector containing the vertices on the shortest path from `s` to `d`.
 """
-function grid_dijkstra(g::AbstractGridGraph, s::Integer, d::Integer)
-    spt = grid_dijkstra(g, s)
+function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer, d::Integer) where {T,R}
+    spt = grid_dijkstra(g, s, pqtype)
+    return get_path(spt, s, d)
+end
+
+"""
+    grid_fast_dijkstra(g, s, d)
+
+Same as [`grid_dijkstra(g, s, d)`](@ref) but with a vector priority queue, which can lead to better performance on small-ish graphs.
+"""
+function grid_fast_dijkstra(g::AbstractGridGraph{T,R}, s::Integer, d::Integer) where {T,R}
+    spt = grid_fast_dijkstra(g, s, pqtype)
     return get_path(spt, s, d)
 end
 
@@ -91,8 +117,18 @@ end
 
 Apply Dijkstra's algorithm on an [`AbstractGridGraph`](@ref) `g`, and return the shortest path distance from `s` to `d`.
 """
-function grid_dijkstra_dist(g::AbstractGridGraph, s::Integer, d::Integer)
+function grid_dijkstra_dist(g::AbstractGridGraph{T,R}, s::Integer, d::Integer) where {T,R}
     spt = grid_dijkstra(g, s)
+    return spt.dists[d]
+end
+
+"""
+    grid_fast_dijkstra_dist(g, s, d)
+
+Same as [`grid_dijkstra_dist(g, s, d)`](@ref) but with a vector priority queue, which can lead to better performance on small-ish graphs.
+"""
+function grid_fast_dijkstra_dist(g::AbstractGridGraph{T,R}, s::Integer, d::Integer) where {T,R}
+    spt = grid_fast_dijkstra(g, s)
     return spt.dists[d]
 end
 
@@ -102,6 +138,8 @@ end
     grid_topological_sort(g, s)
 
 Apply the topological sort on an acyclic [`AbstractGridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
+
+Assumes vertex indices correspond to topological ranks.
 """
 function grid_topological_sort(
     g::AbstractGridGraph{T,R}, s::Integer
@@ -110,10 +148,9 @@ function grid_topological_sort(
     dists = fill(typemax(R), nv(g))
     parents = zeros(T, nv(g))
     dists[s] = zero(R)
-    for u in s:nv(g)
-        d_u = dists[u]
-        for v in outneighbors(g, u)
-            dist_through_u = d_u + get_weight(g, v)
+    for v in vertices(g)
+        for u in inneighbors(g, v)
+            dist_through_u = dists[u] + get_weight(g, v)
             if dist_through_u < dists[v]
                 dists[v] = dist_through_u
                 parents[v] = u
@@ -127,6 +164,8 @@ end
     grid_topological_sort(g, s, d)
 
 Apply the topological sort algorithm on an [`AbstractGridGraph`](@ref) `g`, and return a vector containing the vertices on the shortest path from `s` to `d`.
+
+Assumes vertex indices correspond to topological ranks.
 """
 function grid_topological_sort_path(g::AbstractGridGraph, s::Integer, d::Integer)
     spt = grid_topological_sort(g, s)
@@ -137,10 +176,10 @@ end
     grid_topological_sort_dist(g, s, d)
 
 Apply the topological sort algorithm on an [`AbstractGridGraph`](@ref) `g`, and return the shortest path distance from `s` to `d`.
+
+Assumes vertex indices correspond to topological ranks.
 """
 function grid_topological_sort_dist(g::AbstractGridGraph, s::Integer, d::Integer)
     spt = grid_topological_sort(g, s)
     return spt.dists[d]
 end
-
-## TODO: Bellman-Ford

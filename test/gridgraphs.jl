@@ -2,13 +2,15 @@ using Graphs
 using GridGraphs
 using Test
 
-h = 50
-w = 100
+h = 13
+w = 21
 T = Int32
 R = Float32
 
 for g in [GridGraph{T,R}(rand(R, h, w)), AcyclicGridGraph{T,R}(rand(R, h, w))]
     @testset verbose = true "$(typeof(g))" begin
+        # Graphs interface
+
         @test eltype(g) == T
         @test edgetype(g) == Edge{T}
         @test is_directed(g)
@@ -34,12 +36,22 @@ for g in [GridGraph{T,R}(rand(R, h, w)), AcyclicGridGraph{T,R}(rand(R, h, w))]
         ] == 1:nv(g)
         @test [GridGraphs.node_coord(g, v) for v in vertices(g)] == [(i, j) for j in 1:GridGraphs.width(g) for i in 1:GridGraphs.height(g)]
 
+        # Shortest paths
+
         s = one(T)
         d = nv(g)
-        @test grid_dijkstra_dist(g, s, d) ≈ dijkstra_shortest_paths(g, s).dists[d]
+
+        @test grid_dijkstra_dist(g, s, d) ≈ Graphs.dijkstra_shortest_paths(g, s).dists[d]
+        @test grid_fast_dijkstra_dist(g, s, d) ≈
+            Graphs.dijkstra_shortest_paths(g, s).dists[d]
+
+        @test (@belapsed grid_fast_dijkstra($g, $s)) <
+            (@belapsed grid_dijkstra($g, $s)) <
+            (@belapsed Graphs.dijkstra_shortest_paths($g, $s))
+
         if GridGraphs.is_acyclic(g)
             @test grid_topological_sort_dist(g, s, d) ≈
-                dijkstra_shortest_paths(g, s).dists[d]
+                Graphs.dijkstra_shortest_paths(g, s).dists[d]
         end
     end
 end
