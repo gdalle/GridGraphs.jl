@@ -30,23 +30,6 @@ function get_path(spt::ShortestPathTree, s::Integer, d::Integer)
     return path
 end
 
-"""
-    get_path_matrix(spt::ShortestPathTree, g::AbstractGridGraph, s, d)
-
-Reconstruct the shortest `s -> d` path from a [`ShortestPathTree`](@ref) with source `s`, and store it as a binary matrix of size `height(g) * width(g)`.
-"""
-function get_path_matrix(
-    spt::ShortestPathTree, g::AbstractGridGraph, s::Integer, d::Integer
-)
-    path = get_path(spt, s, d)
-    y = zeros(Bool, height(g), width(g))
-    for v in path
-        i, j = node_coord(g, v)
-        y[i, j] = true
-    end
-    return y
-end
-
 ## Dijkstra
 
 function grid_dijkstra!(
@@ -112,26 +95,6 @@ function grid_fast_dijkstra(g::AbstractGridGraph{T,R}, s::Integer, d::Integer) w
     return get_path(spt, s, d)
 end
 
-"""
-    grid_dijkstra_dist(g, s, d)
-
-Apply Dijkstra's algorithm on an [`AbstractGridGraph`](@ref) `g`, and return the shortest path distance from `s` to `d`.
-"""
-function grid_dijkstra_dist(g::AbstractGridGraph{T,R}, s::Integer, d::Integer) where {T,R}
-    spt = grid_dijkstra(g, s)
-    return spt.dists[d]
-end
-
-"""
-    grid_fast_dijkstra_dist(g, s, d)
-
-Same as [`grid_dijkstra_dist(g, s, d)`](@ref) but with a vector priority queue, which can lead to better performance on small-ish graphs.
-"""
-function grid_fast_dijkstra_dist(g::AbstractGridGraph{T,R}, s::Integer, d::Integer) where {T,R}
-    spt = grid_fast_dijkstra(g, s)
-    return spt.dists[d]
-end
-
 ## Topological sort
 
 """
@@ -167,19 +130,7 @@ Apply the topological sort algorithm on an [`AbstractGridGraph`](@ref) `g`, and 
 
 Assumes vertex indices correspond to topological ranks.
 """
-function grid_topological_sort_path(g::AbstractGridGraph, s::Integer, d::Integer)
+function grid_topological_sort(g::AbstractGridGraph, s::Integer, d::Integer)
     spt = grid_topological_sort(g, s)
     return get_path(spt, s, d)
-end
-
-"""
-    grid_topological_sort_dist(g, s, d)
-
-Apply the topological sort algorithm on an [`AbstractGridGraph`](@ref) `g`, and return the shortest path distance from `s` to `d`.
-
-Assumes vertex indices correspond to topological ranks.
-"""
-function grid_topological_sort_dist(g::AbstractGridGraph, s::Integer, d::Integer)
-    spt = grid_topological_sort(g, s)
-    return spt.dists[d]
 end

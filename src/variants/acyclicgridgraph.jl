@@ -10,6 +10,8 @@ struct AcyclicGridGraph{T<:Integer,R<:Real} <: AbstractGridGraph{T,R}
     weights::Matrix{R}
 end
 
+AcyclicGridGraph(weights::Matrix{R}) where {R} = AcyclicGridGraph{Int,R}(weights)
+
 is_acyclic(g::AcyclicGridGraph) = true
 
 function Graphs.ne(g::AcyclicGridGraph{T}) where {T}

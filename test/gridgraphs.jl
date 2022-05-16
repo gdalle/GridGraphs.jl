@@ -1,3 +1,4 @@
+using BenchmarkTools
 using Graphs
 using GridGraphs
 using Test
@@ -41,8 +42,9 @@ for g in [GridGraph{T,R}(rand(R, h, w)), AcyclicGridGraph{T,R}(rand(R, h, w))]
         s = one(T)
         d = nv(g)
 
-        @test grid_dijkstra_dist(g, s, d) ≈ Graphs.dijkstra_shortest_paths(g, s).dists[d]
-        @test grid_fast_dijkstra_dist(g, s, d) ≈
+        @test grid_dijkstra(g, s).dists[d] ≈
+            Graphs.dijkstra_shortest_paths(g, s).dists[d]
+        @test grid_fast_dijkstra(g, s).dists[d] ≈
             Graphs.dijkstra_shortest_paths(g, s).dists[d]
 
         @test (@belapsed grid_fast_dijkstra($g, $s)) <
@@ -50,7 +52,7 @@ for g in [GridGraph{T,R}(rand(R, h, w)), AcyclicGridGraph{T,R}(rand(R, h, w))]
             (@belapsed Graphs.dijkstra_shortest_paths($g, $s))
 
         if GridGraphs.is_acyclic(g)
-            @test grid_topological_sort_dist(g, s, d) ≈
+            @test grid_topological_sort(g, s).dists[d] ≈
                 Graphs.dijkstra_shortest_paths(g, s).dists[d]
         end
     end
