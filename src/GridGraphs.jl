@@ -15,6 +15,7 @@ export AbstractGridGraph
 export grid_dijkstra
 export grid_fast_dijkstra
 export grid_topological_sort
+export get_path
 export path_to_matrix
 
 export GridGraph
