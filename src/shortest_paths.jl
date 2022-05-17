@@ -32,6 +32,14 @@ end
 
 ## Dijkstra
 
+"""
+    grid_dijkstra!(queue, g, s; naive)
+
+Apply Dijkstra's algorithm on an [`AbstractGridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
+
+The first argument is the priority `queue` used (and modified) during the algorithm.
+When the keyword argument `naive` is set to true, priority updates are disabled and vertices may instead be inserted several times into the queue.
+"""
 function grid_dijkstra!(
     queue::Q, g::AbstractGridGraph{T,R}, s::Integer; naive::Bool=false
 ) where {Q,T,R<:AbstractFloat}
@@ -60,9 +68,9 @@ function grid_dijkstra!(
 end
 
 """
-    grid_dijkstra(g, s)
+    grid_dijkstra(g, s; naive)
 
-Apply Dijkstra's algorithm on an [`AbstractGridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
+Apply [`grid_dijkstra!(queue, g, s; naive)`](@ref) to a queue of type `DataStructures.PriorityQueue`.
 """
 function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer; naive::Bool=false) where {T,R}
     queue = PriorityQueue{T,R}()
@@ -70,9 +78,9 @@ function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer; naive::Bool=false)
 end
 
 """
-    grid_dijkstra(g, s, d)
+    grid_dijkstra(g, s, d; naive)
 
-Apply Dijkstra's algorithm on an [`AbstractGridGraph`](@ref) `g`, and return a vector containing the vertices on the shortest path from `s` to `d`.
+Apply [`grid_dijkstra(g, s; naive)`](@ref) and retrieve the shortest path from `s` to `d`.
 """
 function grid_dijkstra(
     g::AbstractGridGraph{T,R}, s::Integer, d::Integer; naive::Bool=false
