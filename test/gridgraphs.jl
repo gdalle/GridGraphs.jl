@@ -43,6 +43,8 @@ for g in [GridGraph{T,R}(rand(R, h, w)), AcyclicGridGraph{T,R}(rand(R, h, w))]
         d = nv(g)
 
         @test grid_dijkstra(g, s).dists[d] ≈ Graphs.dijkstra_shortest_paths(g, s).dists[d]
+        @test grid_dijkstra(g, s; naive=true).dists[d] ≈
+            Graphs.dijkstra_shortest_paths(g, s).dists[d]
 
         @test min(h, w) <= length(grid_dijkstra(g, s, d)) <= h * w
 

@@ -33,7 +33,7 @@ end
 ## Dijkstra
 
 function grid_dijkstra!(
-    queue::Q, g::AbstractGridGraph{T,R}, s::Integer
+    queue::Q, g::AbstractGridGraph{T,R}, s::Integer; naive::Bool=false
 ) where {Q,T,R<:AbstractFloat}
     @assert !has_negative_weights(g)
     dists = fill(typemax(R), nv(g))
@@ -48,7 +48,11 @@ function grid_dijkstra!(
             if dist_through_u < dists[v]
                 dists[v] = dist_through_u
                 parents[v] = u
-                queue[v] = dist_through_u
+                if naive
+                    enqueue!(queue, v, dist_through_u)
+                else
+                    queue[v] = dist_through_u
+                end
             end
         end
     end
@@ -60,9 +64,9 @@ end
 
 Apply Dijkstra's algorithm on an [`AbstractGridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
 """
-function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer) where {T,R}
+function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer; naive::Bool=false) where {T,R}
     queue = PriorityQueue{T,R}()
-    return grid_dijkstra!(queue, g, s)
+    return grid_dijkstra!(queue, g, s; naive=naive)
 end
 
 """
@@ -70,8 +74,10 @@ end
 
 Apply Dijkstra's algorithm on an [`AbstractGridGraph`](@ref) `g`, and return a vector containing the vertices on the shortest path from `s` to `d`.
 """
-function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer, d::Integer) where {T,R}
-    spt = grid_dijkstra(g, s)
+function grid_dijkstra(
+    g::AbstractGridGraph{T,R}, s::Integer, d::Integer; naive::Bool=false
+) where {T,R}
+    spt = grid_dijkstra(g, s; naive=naive)
     return get_path(spt, s, d)
 end
 
