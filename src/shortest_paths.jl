@@ -66,32 +66,12 @@ function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer) where {T,R}
 end
 
 """
-    grid_fast_dijkstra(g, s)
-
-Same as [`grid_dijkstra(g, s)`](@ref) but with a vector priority queue, which can lead to better performance on small-ish graphs.
-"""
-function grid_fast_dijkstra(g::AbstractGridGraph{T,R}, s::Integer) where {T,R}
-    queue = VectorPriorityQueue{T,R}()
-    return grid_dijkstra!(queue, g, s)
-end
-
-"""
     grid_dijkstra(g, s, d)
 
 Apply Dijkstra's algorithm on an [`AbstractGridGraph`](@ref) `g`, and return a vector containing the vertices on the shortest path from `s` to `d`.
 """
 function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer, d::Integer) where {T,R}
     spt = grid_dijkstra(g, s)
-    return get_path(spt, s, d)
-end
-
-"""
-    grid_fast_dijkstra(g, s, d)
-
-Same as [`grid_dijkstra(g, s, d)`](@ref) but with a vector priority queue, which can lead to better performance on small-ish graphs.
-"""
-function grid_fast_dijkstra(g::AbstractGridGraph{T,R}, s::Integer, d::Integer) where {T,R}
-    spt = grid_fast_dijkstra(g, s)
     return get_path(spt, s, d)
 end
 

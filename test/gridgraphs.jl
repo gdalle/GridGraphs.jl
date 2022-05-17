@@ -43,20 +43,13 @@ for g in [GridGraph{T,R}(rand(R, h, w)), AcyclicGridGraph{T,R}(rand(R, h, w))]
         d = nv(g)
 
         @test grid_dijkstra(g, s).dists[d] ≈ Graphs.dijkstra_shortest_paths(g, s).dists[d]
-        @test grid_fast_dijkstra(g, s).dists[d] ≈
-            Graphs.dijkstra_shortest_paths(g, s).dists[d]
 
         @test min(h, w) <= length(grid_dijkstra(g, s, d)) <= h * w
-        @test min(h, w) <= length(grid_fast_dijkstra(g, s, d)) <= h * w
 
         if GridGraphs.is_acyclic(g)
             @test grid_topological_sort(g, s).dists[d] ≈
                 Graphs.dijkstra_shortest_paths(g, s).dists[d]
             @test min(h, w) <= length(grid_topological_sort(g, s, d)) <= h * w
         end
-
-        @test (@belapsed grid_fast_dijkstra($g, $s)) <
-            (@belapsed grid_dijkstra($g, $s)) <
-            (@belapsed Graphs.dijkstra_shortest_paths($g, $s))
     end
 end
