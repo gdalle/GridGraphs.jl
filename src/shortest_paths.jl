@@ -120,9 +120,7 @@ end
 """
     grid_topological_sort(g, s, d)
 
-Apply the topological sort algorithm on an [`AbstractGridGraph`](@ref) `g`, and return a vector containing the vertices on the shortest path from `s` to `d`.
-
-Assumes vertex indices correspond to topological ranks.
+Apply [`grid_topological_sort(g, s)`](@ref) and retrieve the shortest path from `s` to `d`.
 """
 function grid_topological_sort(g::AbstractGridGraph, s::Integer, d::Integer)
     spt = grid_topological_sort(g, s)
