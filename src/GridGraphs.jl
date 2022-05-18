@@ -7,8 +7,9 @@ using SparseArrays
 include("abstract.jl")
 include("shortest_paths.jl")
 include("conversion.jl")
-include("variants/gridgraph.jl")
-include("variants/acyclicgridgraph.jl")
+include("variants/grid_graph.jl")
+include("variants/acyclic_grid_graph.jl")
+include("variants/sparse_grid_graph.jl")
 
 export AbstractGridGraph
 export grid_dijkstra
@@ -18,5 +19,6 @@ export path_to_matrix
 
 export GridGraph
 export AcyclicGridGraph
+export SparseGridGraph
 
 end

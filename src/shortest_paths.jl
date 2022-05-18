@@ -19,13 +19,17 @@ end
 
 Reconstruct the shortest `s -> d` path from a [`ShortestPathTree`](@ref) with source `s`.
 """
-function get_path(spt::ShortestPathTree, s::Integer, d::Integer)
+function get_path(spt::ShortestPathTree{T}, s::Integer, d::Integer) where {T}
     parents = spt.parents
     v = d
     path = [v]
     while v != s
         v = parents[v]
-        pushfirst!(path, v)
+        if v == zero(T)
+            return T[]
+        else
+            pushfirst!(path, v)
+        end
     end
     return path
 end

@@ -8,8 +8,27 @@ w = 21
 T = Int32
 R = Float32
 
-for g in [GridGraph{T,R}(rand(R, h, w)), AcyclicGridGraph{T,R}(rand(R, h, w))]
-    @testset verbose = true "$(typeof(g))" begin
+weights = rand(R, h, w);
+full_mask = ones(Bool, h, w);
+partial_mask = zeros(Bool, h, w);
+partial_mask[1, :] .= true;
+partial_mask[h, :] .= true;
+partial_mask[:, 1] .= true;
+partial_mask[:, w] .= true;
+
+for g in [
+    GridGraph{T,R}(weights),
+    AcyclicGridGraph{T,R}(weights),
+    SparseGridGraph{T,R}(weights, full_mask),
+    SparseGridGraph{T,R}(weights, partial_mask),
+]
+    if g isa SparseGridGraph
+        is_full = sum(g.mask) == prod(size(g.mask))
+        test_name = is_full ? "$(typeof(g)) - full" : "$(typeof(g)) - sparse"
+    else
+        test_name = "$(typeof(g))"
+    end
+    @testset verbose = true "$test_name" begin
         # Graphs interface
 
         @test eltype(g) == T
@@ -42,11 +61,13 @@ for g in [GridGraph{T,R}(rand(R, h, w)), AcyclicGridGraph{T,R}(rand(R, h, w))]
         s = one(T)
         d = nv(g)
 
-        @test grid_dijkstra(g, s).dists[d] ≈ Graphs.dijkstra_shortest_paths(g, s).dists[d]
+        @test grid_dijkstra(g, s; naive=false).dists[d] ≈
+            Graphs.dijkstra_shortest_paths(g, s).dists[d]
         @test grid_dijkstra(g, s; naive=true).dists[d] ≈
             Graphs.dijkstra_shortest_paths(g, s).dists[d]
 
-        @test min(h, w) <= length(grid_dijkstra(g, s, d)) <= h * w
+        @test min(h, w) <= length(grid_dijkstra(g, s, d; naive=false)) <= h * w
+        @test min(h, w) <= length(grid_dijkstra(g, s, d; naive=true)) <= h * w
 
         if GridGraphs.is_acyclic(g)
             @test grid_topological_sort(g, s).dists[d] ≈

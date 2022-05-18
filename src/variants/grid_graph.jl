@@ -12,8 +12,6 @@ end
 
 GridGraph(weights::Matrix{R}) where {R} = GridGraph{Int,R}(weights)
 
-is_acyclic(g::GridGraph) = false
-
 function Graphs.ne(g::GridGraph{T}) where {T}
     h, w = height(g), width(g)
     return (
@@ -28,7 +26,8 @@ function Graphs.has_edge(g::GridGraph{T}, s::Integer, d::Integer) where {T}
     if has_vertex(g, s) && has_vertex(g, d)
         is, js = node_coord(g, s)
         id, jd = node_coord(g, d)
-        return (s != d) && (abs(is - id) <= one(T)) && (abs(js - jd) <= one(T))  # 8 neighbors max
+        # 8 neighbors max
+        return (abs(is - id) <= one(T)) && (abs(js - jd) <= one(T)) && (s != d)
     else
         return false
     end
@@ -36,16 +35,16 @@ end
 
 function Graphs.outneighbors(g::GridGraph{T}, s::Integer) where {T}
     h, w = height(g), width(g)
-    i, j = node_coord(g, s)
+    is, js = node_coord(g, s)
     possible_neighbors = ( # listed in ascending index order!
-        (i - one(T), j - one(T)),  # top left
-        (i, j - one(T)),  # left
-        (i + one(T), j - one(T)),  # bottom left
-        (i - one(T), j),  # top
-        (i + one(T), j),  # bottom
-        (i - one(T), j + one(T)),  # top right
-        (i, j + one(T)),  # right
-        (i + one(T), j + one(T)),  # bottom right
+        (is - one(T), js - one(T)),  # top left
+        (is, js - one(T)),  # left
+        (is + one(T), js - one(T)),  # bottom left
+        (is - one(T), js),  # top
+        (is + one(T), js),  # bottom
+        (is - one(T), js + one(T)),  # top right
+        (is, js + one(T)),  # right
+        (is + one(T), js + one(T)),  # bottom right
     )
     neighbors = (
         node_index(g, id, jd) for

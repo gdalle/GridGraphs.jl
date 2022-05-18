@@ -11,7 +11,7 @@ using Test
     @testset verbose = true "Doctests" begin
         doctest(GridGraphs)
     end
-    @testset verbose = true "Graphs.jl interface and shortest paths" begin
-        include("gridgraphs.jl")
+    @testset verbose = true "Correctness" begin
+        include("correctness.jl")
     end
 end

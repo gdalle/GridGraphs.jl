@@ -27,7 +27,8 @@ function Graphs.has_edge(g::AcyclicGridGraph{T}, s::Integer, d::Integer) where {
     if has_vertex(g, s) && has_vertex(g, d)
         is, js = node_coord(g, s)
         id, jd = node_coord(g, d)
-        return (s != d) && (0 <= id - is <= 1) && (0 <= jd - js <= 1)  # 3 neighbors max
+        # 3 neighbors max
+        return (zero(T) <= id - is <= one(T)) && (zero(T) <= jd - js <= one(T)) && (s != d)
     else
         return false
     end
@@ -35,11 +36,11 @@ end
 
 function Graphs.outneighbors(g::AcyclicGridGraph{T}, s::Integer) where {T}
     h, w = height(g), width(g)
-    i, j = node_coord(g, s)
+    is, js = node_coord(g, s)
     possible_neighbors = (  # listed in ascending index order!
-        (i + one(T), j),  # bottom
-        (i, j + one(T)),  # right
-        (i + one(T), j + one(T)),  # bottom right
+        (is + one(T), js),  # bottom
+        (is, js + one(T)),  # right
+        (is + one(T), js + one(T)),  # bottom right
     )
     neighbors = (
         node_index(g, id, jd) for
@@ -48,17 +49,17 @@ function Graphs.outneighbors(g::AcyclicGridGraph{T}, s::Integer) where {T}
     return neighbors
 end
 
-function Graphs.inneighbors(g::AcyclicGridGraph{T}, s::Integer) where {T}
+function Graphs.inneighbors(g::AcyclicGridGraph{T}, d::Integer) where {T}
     h, w = height(g), width(g)
-    i, j = node_coord(g, s)
+    id, jd = node_coord(g, d)
     possible_neighbors = (  # listed in ascending index order!
-        (i - one(T), j - one(T)),  # top left
-        (i, j - one(T)),  # left
-        (i - one(T), j),  # top
+        (id - one(T), jd - one(T)),  # top left
+        (id, jd - one(T)),  # left
+        (id - one(T), jd),  # top
     )
     neighbors = (
-        node_index(g, id, jd) for
-        (id, jd) in possible_neighbors if (one(T) <= id <= h) && (one(T) <= jd <= w)
+        node_index(g, is, js) for
+        (is, js) in possible_neighbors if (one(T) <= is <= h) && (one(T) <= js <= w)
     )
     return neighbors
 end

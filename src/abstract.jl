@@ -59,7 +59,7 @@ Graphs.inneighbors(::AbstractGridGraph, ::Integer) = error("Not implemented")
 
 Check whether `g` contains cycles.
 """
-is_acyclic(::AbstractGridGraph) = error("Not implemented")
+is_acyclic(::AbstractGridGraph) = false
 
 ## Indexing translators
 
