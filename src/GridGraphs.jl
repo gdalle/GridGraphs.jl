@@ -12,6 +12,7 @@ include("variants/acyclic_grid_graph.jl")
 include("variants/sparse_grid_graph.jl")
 
 export AbstractGridGraph
+export node_coord, node_index
 export grid_dijkstra
 export grid_topological_sort
 export get_path

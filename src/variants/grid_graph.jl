@@ -55,4 +55,10 @@ end
 
 Graphs.inneighbors(g::GridGraph, d::Integer) = outneighbors(g, d)
 
-Graphs.reverse(g::GridGraph{T,R}) where {T,R} = GridGraph{T,R}(copy(g.weights))
+Graphs.reverse(g::GridGraph{T,R}; make_copy=true) where {T,R}
+    if !make_copy
+        return g
+    else
+        return GridGraph{T,R}(copy(g.weights))
+    end
+end

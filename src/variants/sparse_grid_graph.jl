@@ -84,6 +84,10 @@ end
 
 Graphs.inneighbors(g::SparseGridGraph, d::Integer) = outneighbors(g, d)
 
-function Graphs.reverse(g::SparseGridGraph{T,R}) where {T,R}
-    return SparseGridGraph{T,R}(copy(g.weights), copy(g.mask), g.ne)
+function Graphs.reverse(g::SparseGridGraph{T,R}; make_copy=true) where {T,R}
+    if !make_copy
+        return g
+    else
+        return SparseGridGraph{T,R}(copy(g.weights), copy(g.mask), g.ne)
+    end
 end
