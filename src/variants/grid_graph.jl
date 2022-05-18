@@ -55,7 +55,7 @@ end
 
 Graphs.inneighbors(g::GridGraph, d::Integer) = outneighbors(g, d)
 
-Graphs.reverse(g::GridGraph{T,R}; make_copy=true) where {T,R}
+function Graphs.reverse(g::GridGraph{T,R}; make_copy=true) where {T,R}
     if !make_copy
         return g
     else
