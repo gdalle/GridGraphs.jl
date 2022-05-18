@@ -73,6 +73,9 @@ for g in [
             @test grid_topological_sort(g, s).dists[d] ≈
                 Graphs.dijkstra_shortest_paths(g, s).dists[d]
             @test min(h, w) <= length(grid_topological_sort(g, s, d)) <= h * w
+        else
+            @test Graphs.dijkstra_shortest_paths(g, s).dists[d] ==
+                Graphs.dijkstra_shortest_paths(reverse(g), s).dists[d]
         end
     end
 end

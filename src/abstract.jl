@@ -136,3 +136,7 @@ function Graphs.weights(g::AbstractGridGraph{T,R}) where {T,R}
     end
     return sparse(I, J, V, nv(g), nv(g))
 end
+
+## Misc
+
+Graphs.reverse(g::AbstractGridGraph) = error("Not implemented")

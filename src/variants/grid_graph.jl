@@ -54,3 +54,5 @@ function Graphs.outneighbors(g::GridGraph{T}, s::Integer) where {T}
 end
 
 Graphs.inneighbors(g::GridGraph, d::Integer) = outneighbors(g, d)
+
+Graphs.reverse(g::GridGraph{T,R}) where {T,R} = GridGraph{T,R}(copy(g.weights))
