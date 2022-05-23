@@ -79,7 +79,7 @@ function node_index(g::AbstractGridGraph{T}, i::Integer, j::Integer) where {T}
 end
 
 """
-    node_coord(g, i, j)
+    node_coord(g, v)
 
 Convert a vertex index `v` into the associate tuple `(i,j)` of grid coordinates.
 """
