@@ -61,13 +61,9 @@ for g in [
         s = one(T)
         d = nv(g)
 
-        @test grid_dijkstra(g, s; naive=false).dists[d] ≈
-            Graphs.dijkstra_shortest_paths(g, s).dists[d]
-        @test grid_dijkstra(g, s; naive=true).dists[d] ≈
-            Graphs.dijkstra_shortest_paths(g, s).dists[d]
+        @test grid_dijkstra(g, s).dists[d] ≈ Graphs.dijkstra_shortest_paths(g, s).dists[d]
 
-        @test min(h, w) <= length(grid_dijkstra(g, s, d; naive=false)) <= h * w
-        @test min(h, w) <= length(grid_dijkstra(g, s, d; naive=true)) <= h * w
+        @test min(h, w) <= length(grid_dijkstra(g, s, d)) <= h * w
 
         if GridGraphs.is_acyclic(g)
             @test grid_topological_sort(g, s).dists[d] ≈

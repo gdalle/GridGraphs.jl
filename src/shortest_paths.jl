@@ -37,33 +37,34 @@ end
 ## Dijkstra
 
 """
-    grid_dijkstra!(queue, g, s; naive)
+    grid_dijkstra(g, s)
 
 Apply Dijkstra's algorithm on an [`AbstractGridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
 
-The first argument is the priority `queue` used (and modified) during the algorithm.
-When the keyword argument `naive` is set to true, priority updates are disabled and vertices may instead be inserted several times into the queue.
+Uses a `DataStructures.BinaryHeap` internally instead of a `DataStructures.PriorityQueue`.
 """
-function grid_dijkstra!(
-    queue::Q, g::AbstractGridGraph{T,R}, s::Integer; naive::Bool=false
-) where {Q,T,R<:AbstractFloat}
+function grid_dijkstra(
+    g::AbstractGridGraph{T,R}, s::Integer
+) where {T,R<:AbstractFloat}
     @assert !has_negative_weights(g)
+    # Init storage
+    heap = BinaryHeap(Base.By(last), Pair{T,R}[])
     dists = fill(typemax(R), nv(g))
-    parents = zeros(T, nv(g))
+    # Add source
     dists[s] = zero(R)
-    enqueue!(queue, s, zero(R))
-    while !isempty(queue)
-        u = dequeue!(queue)
-        d_u = dists[u]
-        for v in outneighbors(g, u)
-            dist_through_u = d_u + get_weight(g, v)
-            if dist_through_u < dists[v]
-                dists[v] = dist_through_u
-                parents[v] = u
-                if naive
-                    enqueue!(queue, v, dist_through_u)
-                else
-                    queue[v] = dist_through_u
+    parents = zeros(T, nv(g))
+    push!(heap, s => zero(R))
+    # Main loop
+    while !isempty(heap)
+        u, d_u = pop!(heap)
+        if d_u <= dists[u]
+            dists[u] = d_u
+            for v in outneighbors(g, u)
+                d_v = d_u + get_weight(g, v)
+                if d_v < dists[v]
+                    dists[v] = d_v
+                    parents[v] = u
+                    push!(heap, v => d_v)
                 end
             end
         end
@@ -72,24 +73,14 @@ function grid_dijkstra!(
 end
 
 """
-    grid_dijkstra(g, s; naive)
+    grid_dijkstra(g, s, d)
 
-Apply [`grid_dijkstra!(queue, g, s; naive)`](@ref) to a queue of type `DataStructures.PriorityQueue`.
-"""
-function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer; naive::Bool=false) where {T,R}
-    queue = PriorityQueue{T,R}()
-    return grid_dijkstra!(queue, g, s; naive=naive)
-end
-
-"""
-    grid_dijkstra(g, s, d; naive)
-
-Apply [`grid_dijkstra(g, s; naive)`](@ref) and retrieve the shortest path from `s` to `d`.
+Apply [`grid_dijkstra(g, s)`](@ref) and retrieve the shortest path from `s` to `d`.
 """
 function grid_dijkstra(
     g::AbstractGridGraph{T,R}, s::Integer, d::Integer; naive::Bool=false
 ) where {T,R}
-    spt = grid_dijkstra(g, s; naive=naive)
+    spt = grid_dijkstra(g, s)
     return get_path(spt, s, d)
 end
 
