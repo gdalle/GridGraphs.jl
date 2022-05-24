@@ -1,4 +1,3 @@
-using BenchmarkTools
 using Graphs
 using GridGraphs
 using Test
@@ -23,7 +22,7 @@ for g in [
     SparseGridGraph{T,R}(weights, partial_mask),
 ]
     if g isa SparseGridGraph
-        is_full = sum(g.mask) == prod(size(g.mask))
+        is_full = sum(g.active) == prod(size(g.active))
         test_name = is_full ? "$(typeof(g)) - full" : "$(typeof(g)) - sparse"
     else
         test_name = "$(typeof(g))"
@@ -69,9 +68,6 @@ for g in [
             @test grid_topological_sort(g, s).dists[d] ≈
                 Graphs.dijkstra_shortest_paths(g, s).dists[d]
             @test min(h, w) <= length(grid_topological_sort(g, s, d)) <= h * w
-        else
-            @test Graphs.dijkstra_shortest_paths(g, s).dists[d] ==
-                Graphs.dijkstra_shortest_paths(reverse(g), s).dists[d]
         end
     end
 end

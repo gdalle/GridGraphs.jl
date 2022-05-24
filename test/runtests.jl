@@ -1,5 +1,4 @@
 using Aqua
-using BenchmarkTools
 using Documenter
 using GridGraphs
 using Test

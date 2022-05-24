@@ -95,6 +95,29 @@ function node_coord(g::AbstractGridGraph{T}, v::Integer) where {T}
     end
 end
 
+## Neighbors
+
+"""
+    grid_neighbors(g, i, j)
+
+Return an iterator of grid neighbors listed in ascending index order.
+"""
+function grid_neighbors(i::T, j::T; h::Integer, w::Integer) where {T<:Integer}
+    𝟏 = one(T)
+    candidates = (
+        (i - 𝟏, j - 𝟏),  # top left
+        (i, j - 𝟏),  # left
+        (i + 𝟏, j - 𝟏),  # bottom left
+        (i - 𝟏, j),  # top
+        (i + 𝟏, j),  # bottom
+        (i - 𝟏, j + 𝟏),  # top right
+        (i, j + 𝟏),  # right
+        (i + 𝟏, j + 𝟏),  # bottom right
+    )
+    selected = ((id, jd) for (id, jd) in candidates if (𝟏 <= id <= h) && (𝟏 <= jd <= w))
+    return selected
+end
+
 ## Weights
 
 """

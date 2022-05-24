@@ -36,29 +36,7 @@ end
 function Graphs.outneighbors(g::GridGraph{T}, s::Integer) where {T}
     h, w = height(g), width(g)
     is, js = node_coord(g, s)
-    possible_neighbors = ( # listed in ascending index order!
-        (is - one(T), js - one(T)),  # top left
-        (is, js - one(T)),  # left
-        (is + one(T), js - one(T)),  # bottom left
-        (is - one(T), js),  # top
-        (is + one(T), js),  # bottom
-        (is - one(T), js + one(T)),  # top right
-        (is, js + one(T)),  # right
-        (is + one(T), js + one(T)),  # bottom right
-    )
-    neighbors = (
-        node_index(g, id, jd) for
-        (id, jd) in possible_neighbors if (one(T) <= id <= h) && (one(T) <= jd <= w)
-    )
-    return neighbors
+    return (node_index(g, id, jd) for (id, jd) in grid_neighbors(is, js; h=h, w=w))
 end
 
 Graphs.inneighbors(g::GridGraph, d::Integer) = outneighbors(g, d)
-
-function Graphs.reverse(g::GridGraph{T,R}; make_copy=true) where {T,R}
-    if !make_copy
-        return g
-    else
-        return GridGraph{T,R}(copy(g.weights))
-    end
-end

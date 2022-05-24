@@ -4,12 +4,12 @@ using DataStructures
 using Graphs
 using SparseArrays
 
-include("abstract.jl")
+include("abstract_grid_graph.jl")
 include("shortest_paths.jl")
 include("conversion.jl")
-include("variants/grid_graph.jl")
-include("variants/acyclic_grid_graph.jl")
-include("variants/sparse_grid_graph.jl")
+include("dense/grid_graph.jl")
+include("dense/acyclic_grid_graph.jl")
+include("sparse/sparse_grid_graph.jl")
 
 export AbstractGridGraph
 export node_coord, node_index
@@ -20,6 +20,6 @@ export path_to_matrix
 
 export GridGraph
 export AcyclicGridGraph
-export SparseGridGraph
+export SparseGridGraph, active_vertex
 
 end
