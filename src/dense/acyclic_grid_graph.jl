@@ -10,7 +10,15 @@ struct AcyclicGridGraph{T<:Integer,R} <: AbstractGridGraph{T,R}
     weights::Matrix{R}
 end
 
+function AcyclicGridGraph{T,R}(weights::Vector{R}, h::Integer, w::Integer) where {T,R}
+    return AcyclicGridGraph{T,R}(reshape(weights, h, w))
+end
+
 AcyclicGridGraph(weights::Matrix{R}) where {R} = AcyclicGridGraph{Int,R}(weights)
+
+function AcyclicGridGraph(weights::Vector{R}, h::Integer, w::Integer) where {R}
+    return AcyclicGridGraph{Int,R}(weights, h, w)
+end
 
 is_acyclic(g::AcyclicGridGraph) = true
 

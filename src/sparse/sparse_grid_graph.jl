@@ -47,8 +47,20 @@ function SparseGridGraph{T,R}(weights::Matrix{R}, active::Matrix{Bool}) where {T
     return SparseGridGraph{T,R}(weights, active, ne)
 end
 
+function SparseGridGraph{T,R}(
+    weights::Vector{R}, active::Vector{Bool}, h::Integer, w::Integer
+) where {T,R}
+    return SparseGridGraph{T,R}(reshape(weights, h, w), reshape(active, h, w))
+end
+
 function SparseGridGraph(weights::Matrix{R}, active::Matrix{Bool}) where {R}
     return SparseGridGraph{Int,R}(weights, active)
+end
+
+function SparseGridGraph(
+    weights::Vector{R}, active::Vector{Bool}, h::Integer, w::Integer
+) where {R}
+    return SparseGridGraph{Int,R}(weights, active, h, w)
 end
 
 active_vertex(g::SparseGridGraph, i::Integer, j::Integer) = g.active[i, j]

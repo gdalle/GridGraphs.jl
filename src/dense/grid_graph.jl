@@ -10,7 +10,15 @@ struct GridGraph{T<:Integer,R} <: AbstractGridGraph{T,R}
     weights::Matrix{R}
 end
 
+function GridGraph{T,R}(weights::Vector{R}, h::Integer, w::Integer) where {T,R}
+    return GridGraph{T,R}(reshape(weights, h, w))
+end
+
 GridGraph(weights::Matrix{R}) where {R} = GridGraph{Int,R}(weights)
+
+function GridGraph(weights::Vector{R}, h::Integer, w::Integer) where {R}
+    return GridGraph{Int,R}(weights, h, w)
+end
 
 function Graphs.ne(g::GridGraph{T}) where {T}
     h, w = height(g), width(g)

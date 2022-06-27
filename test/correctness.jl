@@ -21,18 +21,25 @@ partial_mask[:, w] .= true;
 
 graphs_to_test = [
     GridGraph{T,R}(weights),
+    GridGraph{T,R}(vec(weights), h, w),
     AcyclicGridGraph{T,R}(weights),
+    AcyclicGridGraph{T,R}(vec(weights), h, w),
     SparseGridGraph{T,R}(weights, full_mask),
+    SparseGridGraph{T,R}(vec(weights), vec(full_mask), h, w),
     SparseGridGraph{T,R}(weights, partial_mask),
 ];
 
-for g in graphs_to_test
-    if g isa SparseGridGraph
-        is_full = sum(g.active) == prod(size(g.active))
-        test_name = is_full ? "$(typeof(g)) - full" : "$(typeof(g)) - sparse"
-    else
-        test_name = "$(typeof(g))"
-    end
+test_names = [
+    string(GridGraph{T,R}) * " matrix",
+    string(GridGraph{T,R}) * " vector",
+    string(AcyclicGridGraph{T,R}) * " matrix",
+    string(AcyclicGridGraph{T,R}) * " vector",
+    string(SparseGridGraph{T,R}) * " matrix (full)",
+    string(SparseGridGraph{T,R}) * " vector (full)",
+    string(SparseGridGraph{T,R}) * " matrix (sparse)",
+]
+
+for (g, test_name) in zip(graphs_to_test, test_names)
     s = one(T)
     d = nv(g)
 
