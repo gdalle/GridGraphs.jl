@@ -1,12 +1,12 @@
 """
-    AcyclicGridGraph{T<:Integer,R<:Real}
+    AcyclicGridGraph{T<:Integer,R}
 
 Concrete subtype of [`AbstractGridGraph`](@ref), in which we can move from a cell `(i,j)` to its bottom, right and bottom right neighbors only. This means the graph is acyclic.
 
 # Fields
 - `weights::Matrix{R}`: grid of vertex weights
 """
-struct AcyclicGridGraph{T<:Integer,R<:Real} <: AbstractGridGraph{T,R}
+struct AcyclicGridGraph{T<:Integer,R} <: AbstractGridGraph{T,R}
     weights::Matrix{R}
 end
 

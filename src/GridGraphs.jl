@@ -13,8 +13,9 @@ include("sparse/sparse_grid_graph.jl")
 
 export AbstractGridGraph
 export node_coord, node_index
-export grid_dijkstra
 export grid_topological_sort
+export grid_dijkstra
+export grid_bellman_ford
 export get_path
 export path_to_matrix
 

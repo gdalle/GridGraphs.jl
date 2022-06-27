@@ -1,5 +1,5 @@
 """
-    AbstractGridGraph{T<:Integer,R<:Real}
+    AbstractGridGraph{T<:Integer,R}
 
 Abstract supertype for grid graphs with vertices of type `T` and weights of type `R`.
 
@@ -13,7 +13,7 @@ To implement a concrete subtype `G <: AbstractGridGraph`, the following methods 
 - `Graphs.outneighbors(g::G, s)`
 - `Graphs.inneighbors(g::G, d)`
 """
-abstract type AbstractGridGraph{T<:Integer,R<:Real} <: AbstractGraph{T} end
+abstract type AbstractGridGraph{T<:Integer,R} <: AbstractGraph{T} end
 
 """
     height(g)

@@ -1,12 +1,12 @@
 """
-    GridGraph{T<:Integer,R<:Real}
+    GridGraph{T<:Integer,R}
 
 Concrete subtype of [`AbstractGridGraph`](@ref), in which we can move from a cell `(i,j)` to any of its 8 nearest neighbors (lateral, vertical and diagonal).
 
 # Fields
 - `weights::Matrix{R}`: grid of vertex weights
 """
-struct GridGraph{T<:Integer,R<:Real} <: AbstractGridGraph{T,R}
+struct GridGraph{T<:Integer,R} <: AbstractGridGraph{T,R}
     weights::Matrix{R}
 end
 

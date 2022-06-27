@@ -1,5 +1,5 @@
 """
-    SparseGridGraph{T<:Integer,R<:Real}
+    SparseGridGraph{T<:Integer,R}
 
 Analogue of [`GridGraph`](@ref) in which only some vertices are active.
 
@@ -12,7 +12,7 @@ For simplicity, we consider that all nodes of the grid exist, but only some are 
 
 Note that for simplicity, inactive vertices still belong to the graph, but they are isolated from their neighbors.
 """
-struct SparseGridGraph{T<:Integer,R<:Real} <: AbstractGridGraph{T,R}
+struct SparseGridGraph{T<:Integer,R} <: AbstractGridGraph{T,R}
     weights::Matrix{R}
     active::Matrix{Bool}
     ne::Int
