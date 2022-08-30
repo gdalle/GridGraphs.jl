@@ -10,7 +10,7 @@ using Test
     @testset verbose = true "Doctests" begin
         doctest(GridGraphs)
     end
-    @testset verbose = true "Correctness" begin
-        include("correctness.jl")
+    @testset verbose = true "Full grids" begin
+        include("full.jl")
     end
 end

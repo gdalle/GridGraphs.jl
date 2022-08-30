@@ -34,6 +34,21 @@ function get_path(spt::ShortestPathTree{T}, s::Integer, d::Integer) where {T}
     return path
 end
 
+"""
+    path_to_matrix(g::AbstractGridGraph, path::Vector{<:Integer})
+
+Store the shortest `s -> d` path in `g` as an integer matrix of size `height(g) * width(g)`, where entry `(i,j)` counts the number of visits to the associated vertex.
+"""
+function path_to_matrix(g::AbstractGridGraph, path::Vector{<:Integer})
+    y = zeros(Int, height(g), width(g))
+    for v in path
+        i, j = node_coord(g, v)
+        y[i, j] += 1
+    end
+    return y
+end
+
+
 ## Topological sort
 
 """
@@ -44,7 +59,7 @@ Apply the topological sort on an acyclic [`AbstractGridGraph`](@ref) `g`, and re
 Assumes vertex indices correspond to topological ranks.
 """
 function grid_topological_sort(g::AbstractGridGraph{T,R}, s::Integer) where {T,R}
-    @assert is_acyclic(g)
+    @assert GridGraphs.move_direction(g) == acyclic
     # Init storage
     parents = zeros(T, nv(g))
     dists = Vector{Union{Nothing,R}}(undef, nv(g))
@@ -57,7 +72,7 @@ function grid_topological_sort(g::AbstractGridGraph{T,R}, s::Integer) where {T,R
             d_u = dists[u]
             if !isnothing(d_u)
                 d_v = dists[v]
-                d_v_through_u = d_u + get_weight(g, v)
+                d_v_through_u = d_u + edge_weight(g, u, v)
                 if isnothing(d_v) || (d_v_through_u < d_v)
                     dists[v] = d_v_through_u
                     parents[v] = u
@@ -104,7 +119,7 @@ function grid_dijkstra(g::AbstractGridGraph{T,R}, s::Integer) where {T,R}
             dists[u] = d_u
             for v in outneighbors(g, u)
                 d_v = dists[v]
-                d_v_through_u = d_u + get_weight(g, v)
+                d_v_through_u = d_u + edge_weight(g, u, v)
                 if isnothing(d_v) || (d_v_through_u < d_v)
                     dists[v] = d_v_through_u
                     parents[v] = u
@@ -147,7 +162,7 @@ function grid_bellman_ford(g::AbstractGridGraph{T,R}, s::Integer) where {T,R}
                 d_u = dists[u]
                 if !isnothing(d_u)
                     d_v = dists[v]
-                    d_v_through_u = d_u + get_weight(g, v)
+                    d_v_through_u = d_u + edge_weight(g, u, v)
                     if isnothing(d_v) || (d_v_through_u < d_v)
                         dists[v] = d_v_through_u
                         parents[v] = u

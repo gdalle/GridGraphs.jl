@@ -1,6 +1,7 @@
 using ForwardDiff
 using Graphs
 using GridGraphs
+using GridGraphs: rook, queen, cyclic, acyclic, destination, diagonal
 using Random
 using Test
 
@@ -11,38 +12,18 @@ w = 21
 T = Int32
 R = Float32
 
-weights = rand(R, h, w);
-full_mask = ones(Bool, h, w);
-partial_mask = zeros(Bool, h, w);
-partial_mask[1, :] .= true;
-partial_mask[h, :] .= true;
-partial_mask[:, 1] .= true;
-partial_mask[:, w] .= true;
+weights_matrix = rand(R, h, w);
+W = typeof(weights_matrix)
 
-graphs_to_test = [
-    GridGraph{T,R}(weights),
-    GridGraph{T,R}(vec(weights), h, w),
-    AcyclicGridGraph{T,R}(weights),
-    AcyclicGridGraph{T,R}(vec(weights), h, w),
-    SparseGridGraph{T,R}(weights, full_mask),
-    SparseGridGraph{T,R}(vec(weights), vec(full_mask), h, w),
-    SparseGridGraph{T,R}(weights, partial_mask),
-];
+graphs_to_test = AbstractGridGraph[]
+for mt in (rook, queen), md in (cyclic, acyclic), mc in (destination, diagonal)
+    push!(graphs_to_test, FullGridGraph{T,R,W,mt,md,mc}(weights_matrix))
+end
 
-test_names = [
-    string(GridGraph{T,R}) * " matrix",
-    string(GridGraph{T,R}) * " vector",
-    string(AcyclicGridGraph{T,R}) * " matrix",
-    string(AcyclicGridGraph{T,R}) * " vector",
-    string(SparseGridGraph{T,R}) * " matrix (full)",
-    string(SparseGridGraph{T,R}) * " vector (full)",
-    string(SparseGridGraph{T,R}) * " matrix (sparse)",
-]
-
-for (g, test_name) in zip(graphs_to_test, test_names)
+for g in graphs_to_test
     s = one(T)
     d = nv(g)
-
+    test_name = string(typeof(g))
     @testset verbose = true "$test_name" begin
         @testset verbose = true "Interface" begin
             @test eltype(g) == T
@@ -79,7 +60,7 @@ for (g, test_name) in zip(graphs_to_test, test_names)
             @test spt2.dists[d] ≈ spt_ref.dists[d]
             @test min(h, w) <= length(get_path(spt1, s, d)) <= h * w
             @test min(h, w) <= length(get_path(spt2, s, d)) <= h * w
-            if GridGraphs.is_acyclic(g)
+            if GridGraphs.move_direction(g) == acyclic
                 spt3 = grid_topological_sort(g, s)
                 @test spt3.dists[d] ≈ spt_ref.dists[d]
                 @test min(h, w) <= length(get_path(spt3, s, d)) <= h * w
@@ -91,7 +72,7 @@ for (g, test_name) in zip(graphs_to_test, test_names)
             @inferred grid_dijkstra(g, s, d)
             @inferred grid_bellman_ford(g, s)
             @inferred grid_bellman_ford(g, s, d)
-            if GridGraphs.is_acyclic(g)
+            if GridGraphs.move_direction(g) == acyclic
                 @inferred grid_topological_sort(g, s)
                 @inferred grid_topological_sort(g, s, d)
             end
@@ -99,19 +80,19 @@ for (g, test_name) in zip(graphs_to_test, test_names)
     end
 end
 
-@testset verbose = true "Autodiff" begin
-    ∇1 = ForwardDiff.gradient(weights) do weights
-        g = AcyclicGridGraph(weights)
+@testset verbose = true "ForwardDiff" begin
+    ∇1 = ForwardDiff.gradient(weights_matrix) do wm
+        g = FullAcyclicGridGraph(wm)
         grid_topological_sort(g, 1).dists[end]
     end
 
-    ∇2 = ForwardDiff.gradient(weights) do weights
-        g = AcyclicGridGraph(weights)
+    ∇2 = ForwardDiff.gradient(weights_matrix) do wm
+        g = FullAcyclicGridGraph(wm)
         grid_dijkstra(g, 1).dists[end]
     end
 
-    ∇3 = ForwardDiff.gradient(weights) do weights
-        g = AcyclicGridGraph(weights)
+    ∇3 = ForwardDiff.gradient(weights_matrix) do wm
+        g = FullAcyclicGridGraph(wm)
         grid_bellman_ford(g, 1).dists[end]
     end
 
