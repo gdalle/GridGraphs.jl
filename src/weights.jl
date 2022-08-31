@@ -53,11 +53,11 @@ function slow_weights(g::GridGraph{T,R}) where {T,R}
     V = Vector{R}(undef, E)
     for (k, ed) in enumerate(edges(g))
         s, d = src(ed), dst(ed)
-        I[k] = s
-        J[k] = d
+        I[k] = d
+        J[k] = s
         V[k] = edge_weight(g, s, d)
     end
-    return sparse(I, J, V, nv(g), nv(g))
+    return transpose(sparse(I, J, V, nv(g), nv(g)))
 end
 
 function fast_weights(g::GridGraph{T,R}) where {T,R}
@@ -66,15 +66,15 @@ function fast_weights(g::GridGraph{T,R}) where {T,R}
     rowval = Vector{T}(undef, E)
     nzval = Vector{R}(undef, E)
     k = 1
-    for d in vertices(g)
-        colptr[d] = k
-        active_vertex(g, d) || continue
-        for s in inneighbors(g, d)
-            rowval[k] = s
+    for s in vertices(g)
+        colptr[s] = k
+        active_vertex(g, s) || continue
+        for d in outneighbors(g, s)
+            rowval[k] = d
             nzval[k] = edge_weight(g, s, d)
             k += 1
         end
     end
     colptr[end] = k
-    return SparseMatrixCSC(V, V, colptr, rowval, nzval)
+    return transpose(SparseMatrixCSC(V, V, colptr, rowval, nzval))
 end
