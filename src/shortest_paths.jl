@@ -59,7 +59,7 @@ Apply the topological sort on an acyclic [`GridGraph`](@ref) `g`, and return a [
 Assumes vertex indices correspond to topological ranks.
 """
 function grid_topological_sort(g::GridGraph{T,R}, s::Integer) where {T,R}
-    @assert GridGraphs.move_direction(g) == acyclic
+    @assert is_acyclic(g)
     # Init storage
     parents = zeros(T, nv(g))
     dists = Vector{Union{Nothing,R}}(undef, nv(g))

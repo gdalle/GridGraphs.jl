@@ -1,50 +1,23 @@
-"""
-    has_negative_weights(g)
-
-Check whether there are any negative weights.
-"""
-function has_negative_weights(g::GridGraph{T,R}) where {T,R}
-    return any(<(zero(R)), g.weights)
+function edge_weight(g::GridGraph, s, d)
+    if diag_through_corner(g)
+        return edge_weight_direct(g, s, d)
+    else
+        return edge_weight_corner(g, s, d)
+    end
 end
 
-"""
-    vertex_weight(g, v)
-
-Retrieve the vertex weight associated with index `v`.
-"""
-vertex_weight(g::GridGraph, v::Integer) = g.weights[v]
-
-"""
-    vertex_weight_coord(g, i, j)
-
-Retrieve the vertex weight associated with coordinates `(i, j)`.
-"""
-function vertex_weight_coord(g::GridGraph, i::Integer, j::Integer)
-    v = coord_to_index(g, i, j)
-    return vertex_weight(g, v)
+function edge_weight_direct(g::GridGraph, s, d)
+    d_weight = vertex_weight(g, d)
+    return d_weight
 end
 
-function edge_weight(
-    g::GridGraph{T,R,W,A,mt,md,direct}, s::Integer, d::Integer
-) where {T,R,W,A,mt,md}
-    return vertex_weight(g, d)
-end
-
-function edge_weight(
-    g::GridGraph{T,R,W,A,mt,md,corner}, s::Integer, d::Integer
-) where {T,R,W,A,mt,md}
+function edge_weight_corner(g::GridGraph{T,R}, s, d) where {T,R}
+    d_weight = vertex_weight(g, d)
     is, js = index_to_coord(g, s)
     id, jd = index_to_coord(g, d)
-    return edge_weight_coord(g, is, js, id, jd)
-end
-
-function edge_weight_coord(
-    g::GridGraph{T,R,W,A,mt,md,corner}, is::Integer, js::Integer, id::Integer, jd::Integer
-) where {T,R,W,A,mt,md}
-    dest_weight = vertex_weight_coord(g, id, jd)
-    if is == id || js == jd
-        return dest_weight
-    else
+    if is == id || js == jd  # same row or column
+        return d_weight
+    else  # go through the cheapest corner and use Pythagoras
         ic1, jc1 = id, js
         ic2, jc2 = is, jd
         c1_active = active_vertex_coord(g, ic1, jc1)
@@ -52,13 +25,14 @@ function edge_weight_coord(
         if c1_active && c2_active
             c1_weight = vertex_weight_coord(g, ic1, jc1)
             c2_weight = vertex_weight_coord(g, ic2, jc2)
-            return min(sqrt(c1_weight^2 + dest_weight^2), sqrt(c2_weight^2 + dest_weight^2))
+            cmin_weight = min(c1_weight, c2_weight)
+            return convert(R, sqrt(cmin_weight^2 + d_weight^2))
         elseif c1_active
             c1_weight = vertex_weight_coord(g, ic1, jc1)
-            return sqrt(c1_weight^2 + dest_weight^2)
+            return convert(R, sqrt(c1_weight^2 + d_weight^2))
         elseif c2_active
             c2_weight = vertex_weight_coord(g, ic2, jc2)
-            return sqrt(c2_weight^2 + dest_weight^2)
+            return convert(R, sqrt(c2_weight^2 + d_weight^2))
         else
             return typemax(R)
         end

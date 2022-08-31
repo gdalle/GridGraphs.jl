@@ -8,14 +8,10 @@ using Graphs: nv, ne, vertices, edges, has_vertex, has_edge
 using Graphs: inneighbors, outneighbors, src, dst
 using SparseArrays: sparse
 
+include("directions.jl")
 include("grid_graph.jl")
-include("moves.jl")
-include("vertices.jl")
-include("edges.jl")
-include("neighbors.jl")
+include("vertices_edges.jl")
 include("weights.jl")
-include("full.jl")
-include("sparse.jl")
 include("shortest_paths.jl")
 
 export GridGraph
@@ -24,7 +20,5 @@ export grid_dijkstra
 export grid_bellman_ford
 export get_path
 export path_to_matrix
-export FullGridGraph, FullAcyclicGridGraph
-export SparseGridGraph
 
 end
