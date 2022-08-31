@@ -92,7 +92,7 @@ function Base.show(io::IO, g::GridGraph{T,R,W,A}) where {T,R,W,A}
         io,
         "GridGraph with $T vertices and $R weights.\nWeights matrix: $W\nActive matrix: $A\nDirections: $(g.directions)\nDiagonal through corner: $(g.diag_through_corner)\n",
     )
-    if sum(g.active) < 0.5 * length(g.active)
+    if sum(g.active) < length(g.active)
         _show_with_braille_patterns(io, SparseMatrixCSC(g.active))
     end
     return nothing
