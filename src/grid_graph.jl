@@ -84,3 +84,16 @@ Retrieve the vertex weight associated with index `v`.
 """
 vertex_weight(g::GridGraph, v) = g.weights[v]
 vertex_weight_coord(g::GridGraph, i, j) = g.weights[i, j]
+
+## Pretty printing
+
+function Base.show(io::IO, g::GridGraph{T,R,W,A}) where {T,R,W,A}
+    print(
+        io,
+        "GridGraph with $T vertices and $R weights.\nWeights matrix: $W\nActive matrix: $A\nDirections: $(g.directions)\nDiagonal through corner: $(g.diag_through_corner)\n",
+    )
+    if sum(g.active) < 0.5 * length(g.active)
+        _show_with_braille_patterns(io, SparseMatrixCSC(g.active))
+    end
+    return nothing
+end

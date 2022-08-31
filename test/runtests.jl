@@ -13,4 +13,7 @@ using Test
     @testset verbose = true "Correctness" begin
         include("correctness.jl")
     end
+    @testset verbose = true "Autodiff" begin
+        include("autodiff.jl")
+    end
 end

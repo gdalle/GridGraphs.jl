@@ -1,5 +1,27 @@
 @enum GridDirection northwest west southwest north center south northeast east southeast
 
+function Base.show(io::IO, dir::GridDirection)
+    if dir == northwest
+        print(io, "NW")
+    elseif dir == west
+        print(io, "W")
+    elseif dir == southwest
+        print(io, "SW")
+    elseif dir == north
+        print(io, "N")
+    elseif dir == center
+        print(io, "C")
+    elseif dir == south
+        print(io, "S")
+    elseif dir == northeast
+        print(io, "NE")
+    elseif dir == east
+        print(io, "E")
+    elseif dir == southeast
+        print(io, "SE")
+    end
+end
+
 const queen_directions = (
     northwest, west, southwest, north, south, northeast, east, southeast
 )
@@ -24,7 +46,7 @@ function get_tuple(::Type{T}, dir::GridDirection) where {T}
         return (-one(T), +one(T))
     elseif dir == east
         return (zero(T), +one(T))
-    else
+    elseif dir == southeast
         return (+one(T), +one(T))
     end
 end
