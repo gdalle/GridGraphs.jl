@@ -31,6 +31,14 @@ for directions in
             graphs_to_test,
             GridGraph{T}(
                 weights_matrix;
+                directions=directions,
+                diag_through_corner=diag_through_corner,
+            ),
+        )
+        push!(
+            graphs_to_test,
+            GridGraph{T}(
+                weights_matrix;
                 active=active_corridors,
                 directions=directions,
                 diag_through_corner=diag_through_corner,
@@ -54,7 +62,6 @@ for g in graphs_to_test
             @test GridGraphs.width(g) == w
 
             @test nv(g) == h * w
-            @test typeof(nv(g)) == T
             @test length(vertices(g)) == nv(g)
 
             @test all(has_vertex(g, v) for v in vertices(g))
@@ -69,28 +76,24 @@ for g in graphs_to_test
                 i in 1:GridGraphs.height(g)
             ] == 1:nv(g)
             @test [GridGraphs.index_to_coord(g, v) for v in vertices(g)] == [(i, j) for j in 1:GridGraphs.width(g) for i in 1:GridGraphs.height(g)]
+
+            @test GridGraphs.slow_weights(g) == GridGraphs.fast_weights(g)
         end
 
         @testset verbose = true "Shortest paths" begin
             spt_ref = Graphs.dijkstra_shortest_paths(g, s)
-            spt1 = grid_dijkstra(g, s)
-            spt2 = grid_bellman_ford(g, s)
+            spt1 = @inferred grid_dijkstra(g, s)
             @test spt1.dists[d] ≈ spt_ref.dists[d]
-            @test spt2.dists[d] ≈ spt_ref.dists[d]
             @test min(h, w) <= length(get_path(spt1, s, d)) <= h * w
-            @test min(h, w) <= length(get_path(spt2, s, d)) <= h * w
+            if nv(g) < 10000
+                spt2 = @inferred grid_bellman_ford(g, s)
+                @test spt2.dists[d] ≈ spt_ref.dists[d]
+                @test min(h, w) <= length(get_path(spt2, s, d)) <= h * w
+            end
             if GridGraphs.is_acyclic(g)
-                spt3 = grid_topological_sort(g, s)
+                spt3 = @inferred grid_topological_sort(g, s)
                 @test spt3.dists[d] ≈ spt_ref.dists[d]
                 @test min(h, w) <= length(get_path(spt3, s, d)) <= h * w
-            end
-        end
-
-        @testset verbose = true "Type stability" begin
-            @inferred grid_dijkstra(g, s, d)
-            @inferred grid_bellman_ford(g, s, d)
-            if GridGraphs.is_acyclic(g)
-                @inferred grid_topological_sort(g, s, d)
             end
         end
     end
@@ -111,7 +114,6 @@ end
         g = GridGraph(wm; directions=queen_acyclic_directions)
         grid_bellman_ford(g, 1).dists[end]
     end
-
-    @test ∇1 == ∇2
+    w1 = w2 = @test ∇1 == ∇2
     @test ∇1 == ∇3
 end

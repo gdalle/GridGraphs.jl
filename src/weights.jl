@@ -1,8 +1,8 @@
 function edge_weight(g::GridGraph, s, d)
     if diag_through_corner(g)
-        return edge_weight_direct(g, s, d)
-    else
         return edge_weight_corner(g, s, d)
+    else
+        return edge_weight_direct(g, s, d)
     end
 end
 
@@ -44,7 +44,9 @@ end
 
 Compute a sparse matrix of edge weights based on the vertex weights.
 """
-function Graphs.weights(g::GridGraph{T,R}) where {T,R}
+Graphs.weights(g::GridGraph) = fast_weights(g)
+
+function slow_weights(g::GridGraph{T,R}) where {T,R}
     E = ne(g)
     I = Vector{T}(undef, E)
     J = Vector{T}(undef, E)
@@ -56,4 +58,23 @@ function Graphs.weights(g::GridGraph{T,R}) where {T,R}
         V[k] = edge_weight(g, s, d)
     end
     return sparse(I, J, V, nv(g), nv(g))
+end
+
+function fast_weights(g::GridGraph{T,R}) where {T,R}
+    V, E = nv(g), ne(g)
+    colptr = Vector{T}(undef, V + 1)
+    rowval = Vector{T}(undef, E)
+    nzval = Vector{R}(undef, E)
+    k = 1
+    for d in vertices(g)
+        colptr[d] = k
+        active_vertex(g, d) || continue
+        for s in inneighbors(g, d)
+            rowval[k] = s
+            nzval[k] = edge_weight(g, s, d)
+            k += 1
+        end
+    end
+    colptr[end] = k
+    return SparseMatrixCSC(V, V, colptr, rowval, nzval)
 end

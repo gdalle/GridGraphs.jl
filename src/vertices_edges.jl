@@ -73,6 +73,7 @@ function Graphs.outneighbors(g::GridGraph, s)
 end
 
 function outneighbors_coord(g::GridGraph, is, js)
+    # directions are listed in column major order
     candidates = ((is, js) + dir for dir in directions(g))
     return (
         (id, jd) for (id, jd) in candidates if has_vertex_coord(g, id, jd) &&
@@ -87,7 +88,9 @@ function Graphs.inneighbors(g::GridGraph, d)
 end
 
 function inneighbors_coord(g::GridGraph, id, jd)
-    candidates = ((id, jd) - dir for dir in directions(g))
+    dirs = directions(g)
+    # directions are listed in column major order
+    candidates = ((id, jd) - dirs[k] for k in reverse(eachindex(directions(g))))
     return (
         (is, js) for (is, js) in candidates if has_vertex_coord(g, is, js) &&
         active_vertex_coord(g, is, js) &&
