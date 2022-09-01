@@ -22,6 +22,9 @@ function Base.show(io::IO, dir::GridDirection)
     end
 end
 
+const all_directions = (
+    northwest, west, southwest, north, center, south, northeast, east, southeast
+)
 const queen_directions = (
     northwest, west, southwest, north, south, northeast, east, southeast
 )
