@@ -15,24 +15,16 @@ function edge_weight_corner(g::GridGraph{T,R}, s, d) where {T,R}
     d_weight = vertex_weight(g, d)
     is, js = index_to_coord(g, s)
     id, jd = index_to_coord(g, d)
-    if is == id || js == jd  # same row or column
+    if (is == id) || (js == jd)  # same row or column
         return d_weight
     else  # go through the cheapest corner and use Pythagoras
         ic1, jc1 = id, js
         ic2, jc2 = is, jd
-        c1_active = active_vertex_coord(g, ic1, jc1)
-        c2_active = active_vertex_coord(g, ic2, jc2)
-        if c1_active && c2_active
+        if active_vertex_coord(g, ic1, jc1) && active_vertex_coord(g, ic2, jc2)
             c1_weight = vertex_weight_coord(g, ic1, jc1)
             c2_weight = vertex_weight_coord(g, ic2, jc2)
             cmin_weight = min(c1_weight, c2_weight)
             return convert(R, sqrt(cmin_weight^2 + d_weight^2))
-        elseif c1_active
-            c1_weight = vertex_weight_coord(g, ic1, jc1)
-            return convert(R, sqrt(c1_weight^2 + d_weight^2))
-        elseif c2_active
-            c2_weight = vertex_weight_coord(g, ic2, jc2)
-            return convert(R, sqrt(c2_weight^2 + d_weight^2))
         else
             return typemax(R)
         end

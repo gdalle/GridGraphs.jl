@@ -33,7 +33,14 @@ function GridGraph{T}(
     return GridGraph{T}(weights, active, directions, diag_through_corner)
 end
 
-GridGraph(args...; kwargs...) = GridGraph{Int}(args...; kwargs...)
+function GridGraph(
+    weights;
+    active=Trues(size(weights)),
+    directions=queen_directions,
+    diag_through_corner=false,
+)
+    return GridGraph{Int}(weights, active, directions, diag_through_corner)
+end
 
 ## Basic functions
 
