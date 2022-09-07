@@ -1,4 +1,4 @@
-# GridGraphs
+# GridGraphs.jl
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gdalle.github.io/GridGraphs.jl/dev)
 [![Build Status](https://github.com/gdalle/GridGraphs.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/gdalle/GridGraphs.jl/actions/workflows/CI.yml?query=branch%3Amain)

@@ -1,64 +1,49 @@
 """
-    has_negative_weights(g)
+    edge_weight(g, s, d)
 
-Check whether there are any negative weights.
+Compute the weight of the edge from `s` to `d`.
+
+- If `diag_through_corner(g)` is `false`, return the vertex weight of the destination `d`
+- If `diag_through_corner(g)` is `true`, use Pythagoras' theorem on the cheapest of the two corner vertices.
+
+# See also
+
+- [`edge_weight_direct(g, s, d)`](@ref)
+- [`edge_weight_corner(g, s, d)`](@ref)
 """
-function has_negative_weights(g::GridGraph{T,R}) where {T,R}
-    return any(<(zero(R)), g.weights)
+function edge_weight(g::GridGraph, s, d)
+    if diag_through_corner(g)
+        return edge_weight_corner(g, s, d)
+    else
+        return edge_weight_direct(g, s, d)
+    end
 end
 
 """
-    vertex_weight(g, v)
-
-Retrieve the vertex weight associated with index `v`.
+    edge_weight_direct(g, s, d)
 """
-vertex_weight(g::GridGraph, v::Integer) = g.weights[v]
-
-"""
-    vertex_weight_coord(g, i, j)
-
-Retrieve the vertex weight associated with coordinates `(i, j)`.
-"""
-function vertex_weight_coord(g::GridGraph, i::Integer, j::Integer)
-    v = coord_to_index(g, i, j)
-    return vertex_weight(g, v)
+function edge_weight_direct(g::GridGraph, s, d)
+    d_weight = vertex_weight(g, d)
+    return d_weight
 end
 
-function edge_weight(
-    g::GridGraph{T,R,W,A,mt,md,direct}, s::Integer, d::Integer
-) where {T,R,W,A,mt,md}
-    return vertex_weight(g, d)
-end
-
-function edge_weight(
-    g::GridGraph{T,R,W,A,mt,md,corner}, s::Integer, d::Integer
-) where {T,R,W,A,mt,md}
+"""
+    edge_weight_corner(g, s, d)
+"""
+function edge_weight_corner(g::GridGraph{T,R}, s, d) where {T,R}
+    d_weight = vertex_weight(g, d)
     is, js = index_to_coord(g, s)
     id, jd = index_to_coord(g, d)
-    return edge_weight_coord(g, is, js, id, jd)
-end
-
-function edge_weight_coord(
-    g::GridGraph{T,R,W,A,mt,md,corner}, is::Integer, js::Integer, id::Integer, jd::Integer
-) where {T,R,W,A,mt,md}
-    dest_weight = vertex_weight_coord(g, id, jd)
-    if is == id || js == jd
-        return dest_weight
-    else
+    if (is == id) || (js == jd)  # same row or column
+        return d_weight
+    else  # go through the cheapest corner and use Pythagoras
         ic1, jc1 = id, js
         ic2, jc2 = is, jd
-        c1_active = active_vertex_coord(g, ic1, jc1)
-        c2_active = active_vertex_coord(g, ic2, jc2)
-        if c1_active && c2_active
+        if active_vertex_coord(g, ic1, jc1) && active_vertex_coord(g, ic2, jc2)
             c1_weight = vertex_weight_coord(g, ic1, jc1)
             c2_weight = vertex_weight_coord(g, ic2, jc2)
-            return min(sqrt(c1_weight^2 + dest_weight^2), sqrt(c2_weight^2 + dest_weight^2))
-        elseif c1_active
-            c1_weight = vertex_weight_coord(g, ic1, jc1)
-            return sqrt(c1_weight^2 + dest_weight^2)
-        elseif c2_active
-            c2_weight = vertex_weight_coord(g, ic2, jc2)
-            return sqrt(c2_weight^2 + dest_weight^2)
+            cmin_weight = min(c1_weight, c2_weight)
+            return convert(R, sqrt(cmin_weight^2 + d_weight^2))
         else
             return typemax(R)
         end
@@ -68,18 +53,39 @@ end
 """
     Graphs.weights(g)
 
-Compute a sparse matrix of edge weights based on the vertex weights.
+Efficiently compute a sparse matrix of edge weights based on the vertex weights.
 """
-function Graphs.weights(g::GridGraph{T,R}) where {T,R}
+Graphs.weights(g::GridGraph) = fast_weights(g)
+
+function slow_weights(g::GridGraph{T,R}) where {T,R}
     E = ne(g)
     I = Vector{T}(undef, E)
     J = Vector{T}(undef, E)
     V = Vector{R}(undef, E)
     for (k, ed) in enumerate(edges(g))
         s, d = src(ed), dst(ed)
-        I[k] = s
-        J[k] = d
+        I[k] = d
+        J[k] = s
         V[k] = edge_weight(g, s, d)
     end
-    return sparse(I, J, V, nv(g), nv(g))
+    return transpose(sparse(I, J, V, nv(g), nv(g)))
+end
+
+function fast_weights(g::GridGraph{T,R}) where {T,R}
+    V, E = nv(g), ne(g)
+    colptr = Vector{T}(undef, V + 1)
+    rowval = Vector{T}(undef, E)
+    nzval = Vector{R}(undef, E)
+    k = 1
+    for s in vertices(g)
+        colptr[s] = k
+        active_vertex(g, s) || continue
+        for d in outneighbors(g, s)
+            rowval[k] = d
+            nzval[k] = edge_weight(g, s, d)
+            k += 1
+        end
+    end
+    colptr[end] = k
+    return transpose(SparseMatrixCSC(V, V, colptr, rowval, nzval))
 end
