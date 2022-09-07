@@ -48,7 +48,6 @@ function path_to_matrix(g::GridGraph, path::Vector{<:Integer})
     return y
 end
 
-
 ## Topological sort
 
 """
@@ -56,7 +55,7 @@ end
 
 Apply the topological sort on an acyclic [`GridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
 
-Assumes vertex indices correspond to topological ranks.
+Assumes vertex indices correspond to topological ranks. Compatible with ForwardDiff.
 """
 function grid_topological_sort(g::GridGraph{T,R}, s::Integer) where {T,R}
     @assert is_acyclic(g)
@@ -100,7 +99,7 @@ end
 
 Apply Dijkstra's algorithm on an [`GridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
 
-Uses a `DataStructures.BinaryHeap` internally instead of a `DataStructures.PriorityQueue`.
+Uses a `DataStructures.BinaryHeap` internally instead of a `DataStructures.PriorityQueue`. Compatible with ForwardDiff.
 """
 function grid_dijkstra(g::GridGraph{T,R}, s::Integer) where {T,R}
     @assert !has_negative_weights(g)
@@ -147,6 +146,8 @@ end
     grid_bellman_ford(g, s)
 
 Apply the Bellman-Ford algorithm on an [`GridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
+
+Compatible with ForwardDiff.
 """
 function grid_bellman_ford(g::GridGraph{T,R}, s::Integer) where {T,R}
     # Init storage

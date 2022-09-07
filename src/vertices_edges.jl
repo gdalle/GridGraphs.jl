@@ -115,10 +115,10 @@ function same_directions(directions1, directions2)
     return true
 end
 
-isqueen(g::GridGraph) = same_directions(directions(g), queen_directions)
-isqueen_acyclic(g::GridGraph) = same_directions(directions(g), queen_acyclic_directions)
-isrook(g::GridGraph) = same_directions(directions(g), rook_directions)
-isrook_acyclic(g::GridGraph) = same_directions(directions(g), rook_acyclic_directions)
+isqueen(g::GridGraph) = same_directions(directions(g), QUEEN_DIRECTIONS)
+isqueen_acyclic(g::GridGraph) = same_directions(directions(g), QUEEN_ACYCLIC_DIRECTIONS)
+isrook(g::GridGraph) = same_directions(directions(g), ROOK_DIRECTIONS)
+isrook_acyclic(g::GridGraph) = same_directions(directions(g), ROOK_ACYCLIC_DIRECTIONS)
 
 function Graphs.ne(g::GridGraph)
     if all_active(g)

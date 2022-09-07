@@ -1,3 +1,8 @@
+"""
+    GridGraphs
+
+A package for graphs defined by a grid of vertices.
+"""
 module GridGraphs
 
 using Base: OneTo

@@ -1,8 +1,8 @@
 using ForwardDiff
 using Graphs
 using GridGraphs
-using GridGraphs:
-    queen_directions, queen_acyclic_directions, rook_directions, rook_acyclic_directions
+using GridGraphs: QUEEN_DIRECTIONS, ROOK_DIRECTIONS
+using GridGraphs: QUEEN_ACYCLIC_DIRECTIONS, ROOK_ACYCLIC_DIRECTIONS
 using Random
 using Test
 
@@ -25,9 +25,11 @@ end
 
 graphs_to_test = GridGraph[]
 test_names = String[]
+directions_to_test = (
+    QUEEN_DIRECTIONS, QUEEN_ACYCLIC_DIRECTIONS, ROOK_DIRECTIONS, ROOK_ACYCLIC_DIRECTIONS
+)
 
-for directions in
-    (queen_directions, queen_acyclic_directions, rook_directions, rook_acyclic_directions)
+for directions in directions_to_test
     for diag_through_corner in (false, true)
         push!(
             graphs_to_test,

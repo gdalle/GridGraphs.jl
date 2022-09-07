@@ -1,3 +1,16 @@
+"""
+    edge_weight(g, s, d)
+
+Compute the weight of the edge from `s` to `d`.
+
+- If `diag_through_corner(g)` is `false`, return the vertex weight of the destination `d`
+- If `diag_through_corner(g)` is `true`, use Pythagoras' theorem on the cheapest of the two corner vertices.
+
+# See also
+
+- [`edge_weight_direct(g, s, d)`](@ref)
+- [`edge_weight_corner(g, s, d)`](@ref)
+"""
 function edge_weight(g::GridGraph, s, d)
     if diag_through_corner(g)
         return edge_weight_corner(g, s, d)
@@ -6,11 +19,17 @@ function edge_weight(g::GridGraph, s, d)
     end
 end
 
+"""
+    edge_weight_direct(g, s, d)
+"""
 function edge_weight_direct(g::GridGraph, s, d)
     d_weight = vertex_weight(g, d)
     return d_weight
 end
 
+"""
+    edge_weight_corner(g, s, d)
+"""
 function edge_weight_corner(g::GridGraph{T,R}, s, d) where {T,R}
     d_weight = vertex_weight(g, d)
     is, js = index_to_coord(g, s)
@@ -34,7 +53,7 @@ end
 """
     Graphs.weights(g)
 
-Compute a sparse matrix of edge weights based on the vertex weights.
+Efficiently compute a sparse matrix of edge weights based on the vertex weights.
 """
 Graphs.weights(g::GridGraph) = fast_weights(g)
 

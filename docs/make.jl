@@ -13,12 +13,7 @@ makedocs(;
         canonical="https://gdalle.github.io/GridGraphs.jl",
         assets=String[],
     ),
-    pages=[
-        "Home" => "index.md",
-    ],
+    pages=["Home" => "index.md", "API reference" => "api.md"],
 )
 
-deploydocs(;
-    repo="github.com/gdalle/GridGraphs.jl",
-    devbranch="main",
-)
+deploydocs(; repo="github.com/gdalle/GridGraphs.jl", devbranch="main")
