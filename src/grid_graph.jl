@@ -89,6 +89,7 @@ Check if vertex `v` is active.
 active_vertex(g::GridGraph, v) = g.active[v]
 active_vertex_coord(g::GridGraph, i, j) = g.active[i, j]
 all_active(g::GridGraph) = all(isone, g.active)
+nb_active(g::GridGraph) = sum(g.active)
 fraction_active(g::GridGraph) = sum(g.active) / length(g.active)
 
 """
