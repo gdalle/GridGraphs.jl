@@ -13,7 +13,7 @@ Graph defined by a grid of vertices with index type `T`.
 - `weights::W`: vertex weights matrix, which serve to define edge weights.
 - `active::A`: vertex activity matrix. All the vertices on the grid exist, but only active vertices can have edges (inactive vertices are isolated).
 - `directions::Vector{GridDirection}`: the set of legal directions which are used to define edges.
-- `diag_through_corner::Bool: defines how the weight of a diagonal edge is computed.
+- `diag_through_corner::Bool`: defines how the weight of a diagonal edge is computed.
 
 # See also
 
