@@ -72,6 +72,7 @@ function get_tuple(::Type{T}, dir::GridDirection) where {T}
     elseif dir == southeast
         return (+one(T), +one(T))
     end
+    return nothing
 end
 
 get_tuple(dir::GridDirection) = get_tuple(Int8, dir)
@@ -107,6 +108,7 @@ function get_direction(Δi::T, Δj::T) where {T}
             return southeast
         end
     end
+    return nothing
 end
 
 """

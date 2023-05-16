@@ -98,9 +98,17 @@ fraction_active(g::GridGraph) = sum(g.active) / length(g.active)
 Check if direction `dir` is a valid edge direction.
 """
 has_direction(g::GridGraph, dir::GridDirection) = insorted(dir, g.directions)
-has_direction_coord(g::GridGraph, Δi, Δj) = has_direction(g, get_direction(Δi, Δj))
 directions(g::GridGraph) = g.directions
 is_acyclic(g::GridGraph) = is_acyclic(directions(g))
+
+function has_direction_coord(g::GridGraph, Δi, Δj)
+    dir = get_direction(Δi, Δj)
+    if isnothing(dir)
+        return false
+    else
+        return has_direction(g, dir)
+    end
+end
 
 """
     diag_through_corner(g)
