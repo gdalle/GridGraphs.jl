@@ -1,5 +1,6 @@
 # GridGraphs.jl
 
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://gdalle.github.io/GridGraphs.jl/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gdalle.github.io/GridGraphs.jl/dev)
 [![Build Status](https://github.com/gdalle/GridGraphs.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/gdalle/GridGraphs.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/gdalle/GridGraphs.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/gdalle/GridGraphs.jl)
