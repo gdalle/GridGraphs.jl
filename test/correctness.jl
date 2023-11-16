@@ -1,6 +1,5 @@
 using Graphs
 using GridGraphs
-using GridGraphs: SETS_OF_DIRECTIONS
 using GridGraphs:
     index_to_coord,
     coord_to_index,
@@ -78,7 +77,7 @@ for g in graphs_to_test
         @test [coord_to_index(g, i, j) for j in 1:width(g) for i in 1:height(g)] == 1:nv(g)
         @test [index_to_coord(g, v) for v in vertices(g)] == [(i, j) for j in 1:width(g) for i in 1:height(g)]
         @test index_to_coord(g, nv(g) + 1) == (0, 0)
-        @test index_to_coord(g, height(g) + 1, width(g) + 1) == 0
+        @test coord_to_index(g, height(g) + 1, width(g) + 1) == 0
 
         ## Vertices
 
