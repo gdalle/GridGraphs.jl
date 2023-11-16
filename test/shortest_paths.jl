@@ -1,4 +1,5 @@
 using ForwardDiff
+using Graphs
 using GridGraphs
 using Random
 using Test
@@ -22,6 +23,11 @@ spt2 = @inferred grid_bellman_ford(g, s)
 spt3 = @inferred grid_topological_sort(g, s)
 @test spt3.dists[d] ≈ spt_ref.dists[d]
 @test 1 <= length(grid_topological_sort(g, s, d)) <= d
+
+g = GridGraph(ones(3, 3); directions=QUEEN_DIRECTIONS)
+path = grid_dijkstra(g, 1, nv(g))
+mat = path_to_matrix(g, path)
+@test mat == [1 0 0; 0 1 0; 0 0 1]
 
 ## Autodiff
 

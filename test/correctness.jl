@@ -32,7 +32,14 @@ vertex_activities[3, 2] = false;
 
 graphs_to_test = GridGraph[]
 
-for directions in SETS_OF_DIRECTIONS
+for directions in (
+    ROOK_DIRECTIONS,
+    ROOK_DIRECTIONS_PLUS_CENTER,
+    ROOK_DIRECTIONS_ACYCLIC,
+    QUEEN_DIRECTIONS,
+    QUEEN_DIRECTIONS_PLUS_CENTER,
+    QUEEN_DIRECTIONS_ACYCLIC,
+)
     for nb_corners_for_diag in (0, 1, 2)
         for pythagoras_cost_for_diag in (true, false)
             try
@@ -70,6 +77,8 @@ for g in graphs_to_test
 
         @test [coord_to_index(g, i, j) for j in 1:width(g) for i in 1:height(g)] == 1:nv(g)
         @test [index_to_coord(g, v) for v in vertices(g)] == [(i, j) for j in 1:width(g) for i in 1:height(g)]
+        @test index_to_coord(g, nv(g) + 1) == (0, 0)
+        @test index_to_coord(g, height(g) + 1, width(g) + 1) == 0
 
         ## Vertices
 
@@ -85,7 +94,7 @@ for g in graphs_to_test
 
         g2 = deepcopy(g)
         g2.vertex_activities .= true
-        @test ne(g) == length(collect(edges(g)))
+        @test ne(g2) == length(collect(edges(g2)))
 
         ## Diagonals
 
