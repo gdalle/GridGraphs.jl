@@ -54,6 +54,7 @@ end
 for g in graphs_to_test
     test_name = string(typeof(g))
     @testset "$test_name" begin
+        @info "Testing" g
         @test eltype(g) == Int
         @test edgetype(g) == Edge{Int}
         @test is_directed(g)
@@ -80,6 +81,11 @@ for g in graphs_to_test
         @test ne(g) == length(collect(edges(g)))
         @test all(has_edge(g, src(ed), dst(ed)) for ed in edges(g))
         @test !has_edge(g, nv(g), 1)
+        @test !has_edge(g, 1, nv(g) + 1)
+
+        g2 = deepcopy(g)
+        g2.vertex_activities .= true
+        @test ne(g) == length(collect(edges(g)))
 
         ## Diagonals
 

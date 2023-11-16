@@ -84,7 +84,6 @@ function get_tuple(dir::GridDirection)
     elseif dir == southeast
         return (+1, +1)
     end
-    return nothing
 end
 
 """

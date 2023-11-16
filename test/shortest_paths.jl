@@ -13,15 +13,15 @@ spt_ref = Graphs.dijkstra_shortest_paths(g, s)
 
 spt1 = @inferred grid_dijkstra(g, s)
 @test spt1.dists[d] ≈ spt_ref.dists[d]
-@test 1 <= length(get_path(spt1, s, d)) <= d
+@test 1 <= length(grid_dijkstra(g, s, d)) <= d
 
 spt2 = @inferred grid_bellman_ford(g, s)
 @test spt2.dists[d] ≈ spt_ref.dists[d]
-@test 1 <= length(get_path(spt2, s, d)) <= d
+@test 1 <= length(grid_bellman_ford(g, s, d)) <= d
 
 spt3 = @inferred grid_topological_sort(g, s)
 @test spt3.dists[d] ≈ spt_ref.dists[d]
-@test 1 <= length(get_path(spt3, s, d)) <= d
+@test 1 <= length(grid_topological_sort(g, s, d)) <= d
 
 ## Autodiff
 
