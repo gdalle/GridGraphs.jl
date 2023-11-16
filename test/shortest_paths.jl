@@ -1,6 +1,5 @@
 using ForwardDiff
 using GridGraphs
-using GridGraphs.GridShortestPaths
 using Random
 using Test
 
