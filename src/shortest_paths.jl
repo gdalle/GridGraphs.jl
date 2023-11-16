@@ -1,32 +1,32 @@
 ## Shortest path storage
 
 """
-    ShortestPathTree{T<:Integer,R<:Real}
+    ShortestPathTree{R<:Real}
 
 Storage for the result of a single-source shortest paths query with source `s`.
 
 # Fields
-- `parents::Vector{T}`: the parent of each vertex `v` in a shortest `s -> v` path.
+- `parents::Vector{Int}`: the parent of each vertex `v` in a shortest `s -> v` path.
 - `dists::Vector{R}`: the distance of each vertex `v` from `s`.
 """
-struct ShortestPathTree{T<:Integer,R}
-    parents::Vector{T}
+struct ShortestPathTree{R}
+    parents::Vector{Int}
     dists::Vector{R}
 end
 
 """
     get_path(spt::ShortestPathTree, s, d)
 
-Reconstruct the shortest `s -> d` path from a [`ShortestPathTree`](@ref) with source `s`.
+Reconstruct the shortest `s -> d` path from a `ShortestPathTree` with source `s`.
 """
-function get_path(spt::ShortestPathTree{T}, s::Integer, d::Integer) where {T}
+function get_path(spt::ShortestPathTree, s, d)
     parents = spt.parents
     v = d
     path = [v]
     while v != s
         v = parents[v]
-        if v == zero(T)
-            return T[]
+        if v == 0
+            return Int[]
         else
             pushfirst!(path, v)
         end
@@ -53,14 +53,14 @@ end
 """
     grid_topological_sort(g, s)
 
-Apply the topological sort on an acyclic [`GridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
+Apply the topological sort on an acyclic `GridGraph` `g`, and return a `ShortestPathTree` with source `s`.
 
 Assumes vertex indices correspond to topological ranks. Compatible with ForwardDiff.
 """
-function grid_topological_sort(g::GridGraph{T,R}, s::Integer) where {T,R}
+function grid_topological_sort(g::GridGraph{R}, s) where {R}
     @assert is_acyclic(g)
     # Init storage
-    parents = zeros(T, nv(g))
+    parents = zeros(Int, nv(g))
     dists = Vector{Union{Nothing,R}}(undef, nv(g))
     fill!(dists, nothing)
     # Add source
@@ -87,7 +87,7 @@ end
 
 Apply [`grid_topological_sort(g, s)`](@ref) and retrieve the shortest path from `s` to `d`.
 """
-function grid_topological_sort(g::GridGraph, s::Integer, d::Integer)
+function grid_topological_sort(g::GridGraph, s, d)
     spt = grid_topological_sort(g, s)
     return get_path(spt, s, d)
 end
@@ -97,15 +97,15 @@ end
 """
     grid_dijkstra(g, s)
 
-Apply Dijkstra's algorithm on an [`GridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
+Apply Dijkstra's algorithm on an `GridGraph` `g`, and return a `ShortestPathTree` with source `s`.
 
 Uses a `DataStructures.BinaryHeap` internally instead of a `DataStructures.PriorityQueue`. Compatible with ForwardDiff.
 """
-function grid_dijkstra(g::GridGraph{T,R}, s::Integer) where {T,R}
+function grid_dijkstra(g::GridGraph{R}, s) where {R}
     @assert !has_negative_weights(g)
     # Init storage
-    heap = BinaryHeap(Base.By(last), Pair{T,R}[])
-    parents = zeros(T, nv(g))
+    heap = BinaryHeap(Base.By(last), Pair{Int,R}[])
+    parents = zeros(Int, nv(g))
     dists = Vector{Union{Nothing,R}}(undef, nv(g))
     fill!(dists, nothing)
     # Add source
@@ -135,7 +135,7 @@ end
 
 Apply [`grid_dijkstra(g, s)`](@ref) and retrieve the shortest path from `s` to `d`.
 """
-function grid_dijkstra(g::GridGraph, s::Integer, d::Integer)
+function grid_dijkstra(g::GridGraph, s, d)
     spt = grid_dijkstra(g, s)
     return get_path(spt, s, d)
 end
@@ -145,13 +145,13 @@ end
 """
     grid_bellman_ford(g, s)
 
-Apply the Bellman-Ford algorithm on an [`GridGraph`](@ref) `g`, and return a [`ShortestPathTree`](@ref) with source `s`.
+Apply the Bellman-Ford algorithm on an `GridGraph` `g`, and return a `ShortestPathTree` with source `s`.
 
 Compatible with ForwardDiff.
 """
-function grid_bellman_ford(g::GridGraph{T,R}, s::Integer) where {T,R}
+function grid_bellman_ford(g::GridGraph{R}, s) where {R}
     # Init storage
-    parents = zeros(T, nv(g))
+    parents = zeros(Int, nv(g))
     dists = Vector{Union{Nothing,R}}(undef, nv(g))
     fill!(dists, nothing)
     # Add source
@@ -180,7 +180,7 @@ end
 
 Apply [`grid_bellman_ford(g, s)`](@ref) and retrieve the shortest path from `s` to `d`.
 """
-function grid_bellman_ford(g::GridGraph, s::Integer, d::Integer)
+function grid_bellman_ford(g::GridGraph, s, d)
     spt = grid_bellman_ford(g, s)
     return get_path(spt, s, d)
 end
