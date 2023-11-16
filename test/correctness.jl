@@ -1,102 +1,123 @@
-using ForwardDiff
 using Graphs
 using GridGraphs
-using GridGraphs: QUEEN_DIRECTIONS, ROOK_DIRECTIONS
-using GridGraphs: QUEEN_ACYCLIC_DIRECTIONS, ROOK_ACYCLIC_DIRECTIONS
+using GridGraphs: SETS_OF_DIRECTIONS
+using GridGraphs:
+    index_to_coord,
+    coord_to_index,
+    height,
+    width,
+    directions,
+    is_acyclic,
+    nb_corners_for_diag,
+    pythagoras_cost_for_diag,
+    slow_weights
 using Random
 using Test
 
 Random.seed!(63)
 
-h = 13
-w = 21
-T = Int32
-R = Float32
+#=
+Test grid
 
-weights_matrix = rand(R, h, w);
+....
+..@.
+.@..
 
-active_corridors = fill(false, h, w);
-for i in (1, h ÷ 2, h)
-    active_corridors[i, :] .= true
-end
-for j in (1, w ÷ 2, w)
-    active_corridors[:, j] .= true
-end
+=#
+
+vertex_weights = ones(3, 4);
+vertex_activities = ones(Bool, 3, 4);
+vertex_activities[2, 3] = false;
+vertex_activities[3, 2] = false;
 
 graphs_to_test = GridGraph[]
-test_names = String[]
-directions_to_test = (
-    QUEEN_DIRECTIONS, QUEEN_ACYCLIC_DIRECTIONS, ROOK_DIRECTIONS, ROOK_ACYCLIC_DIRECTIONS
-)
 
-for directions in directions_to_test
-    for diag_through_corner in (false, true)
-        push!(
-            graphs_to_test,
-            GridGraph{T}(
-                weights_matrix;
-                directions=directions,
-                diag_through_corner=diag_through_corner,
-            ),
-        )
-        push!(test_names, "Full graph - $directions - $diag_through_corner")
-        push!(
-            graphs_to_test,
-            GridGraph{T}(
-                weights_matrix;
-                active=active_corridors,
-                directions=directions,
-                diag_through_corner=diag_through_corner,
-            ),
-        )
-        push!(test_names, "Sparse graph - $directions - $diag_through_corner")
+for directions in SETS_OF_DIRECTIONS
+    for nb_corners_for_diag in (0, 1, 2)
+        for pythagoras_cost_for_diag in (true, false)
+            try
+                g = GridGraph(
+                    vertex_weights;
+                    vertex_activities,
+                    directions,
+                    nb_corners_for_diag,
+                    pythagoras_cost_for_diag,
+                )
+                push!(graphs_to_test, g)
+            catch e
+                nothing
+            end
+        end
     end
 end
 
-for (g, name) in zip(graphs_to_test, test_names)
-    s = one(T)
-    d = nv(g)
+for g in graphs_to_test
     test_name = string(typeof(g))
-    @testset verbose = true "$name" begin
-        @test eltype(g) == T
-        @test edgetype(g) == Edge{T}
+    @testset "$test_name" begin
+        @test eltype(g) == Int
+        @test edgetype(g) == Edge{Int}
         @test is_directed(g)
         @test is_directed(typeof(g))
 
-        @test GridGraphs.height(g) == h
-        @test GridGraphs.width(g) == w
+        @test height(g) == 3
+        @test width(g) == 4
 
-        @test nv(g) == h * w
+        @test nv(g) == 12
         @test length(vertices(g)) == nv(g)
+
+        ## Indexing 
+
+        @test [coord_to_index(g, i, j) for j in 1:width(g) for i in 1:height(g)] == 1:nv(g)
+        @test [index_to_coord(g, v) for v in vertices(g)] == [(i, j) for j in 1:width(g) for i in 1:height(g)]
+
+        ## Vertices
 
         @test all(has_vertex(g, v) for v in vertices(g))
         @test !has_vertex(g, nv(g) + 1)
 
+        ## Edges
+
         @test ne(g) == length(collect(edges(g)))
         @test all(has_edge(g, src(ed), dst(ed)) for ed in edges(g))
-        @test !has_edge(g, 1, 1)
+        @test !has_edge(g, nv(g), 1)
 
-        @test [
-            GridGraphs.coord_to_index(g, i, j) for j in 1:GridGraphs.width(g) for
-            i in 1:GridGraphs.height(g)
-        ] == 1:nv(g)
-        @test [GridGraphs.index_to_coord(g, v) for v in vertices(g)] == [(i, j) for j in 1:GridGraphs.width(g) for i in 1:GridGraphs.height(g)]
+        ## Diagonals
 
-        @test GridGraphs.slow_weights(g) == GridGraphs.fast_weights(g)
-
-        spt_ref = Graphs.dijkstra_shortest_paths(g, s)
-        spt1 = @inferred grid_dijkstra(g, s)
-        @test spt1.dists[d] ≈ spt_ref.dists[d]
-        @test min(h, w) <= length(get_path(spt1, s, d)) <= h * w
-        if nv(g) < 10000
-            spt2 = @inferred grid_bellman_ford(g, s)
-            @test spt2.dists[d] ≈ spt_ref.dists[d]
-            @test min(h, w) <= length(get_path(spt2, s, d)) <= h * w
+        if directions(g) in
+            (ROOK_DIRECTIONS, ROOK_DIRECTIONS_PLUS_CENTER, ROOK_DIRECTIONS_ACYCLIC)
+            @test !has_edge(g, coord_to_index(g, 1, 1), coord_to_index(g, 2, 2))
+        elseif directions(g) in
+            (QUEEN_DIRECTIONS, QUEEN_DIRECTIONS_PLUS_CENTER, QUEEN_DIRECTIONS_ACYCLIC)
+            @test has_edge(g, coord_to_index(g, 1, 1), coord_to_index(g, 2, 2))
         end
-        if GridGraphs.is_acyclic(g)
-            spt3 = @inferred grid_topological_sort(g, s)
-            @test spt3.dists[d] ≈ spt_ref.dists[d]
-            @test min(h, w) <= length(get_path(spt3, s, d)) <= h * w
+
+        ## Hole
+
+        if directions(g) in
+            (QUEEN_DIRECTIONS, QUEEN_DIRECTIONS_PLUS_CENTER, QUEEN_DIRECTIONS_ACYCLIC)
+            if nb_corners_for_diag(g) == 0
+                @test has_edge(g, coord_to_index(g, 2, 2), coord_to_index(g, 3, 3)) # 0 corner
+                @test has_edge(g, coord_to_index(g, 1, 3), coord_to_index(g, 2, 4)) # 1 corner
+            elseif nb_corners_for_diag(g) == 1
+                @test !has_edge(g, coord_to_index(g, 2, 2), coord_to_index(g, 3, 3)) # 0 corner
+                @test has_edge(g, coord_to_index(g, 1, 3), coord_to_index(g, 2, 4)) # 1 corner
+            elseif nb_corners_for_diag(g) == 2
+                @test !has_edge(g, coord_to_index(g, 2, 2), coord_to_index(g, 3, 3)) # 0 corner
+                @test !has_edge(g, coord_to_index(g, 1, 3), coord_to_index(g, 2, 4)) # 1 corner
+            end
+        end
+
+        ## Weights
+
+        @test slow_weights(g) == weights(g)
+
+        if directions(g) in
+            (QUEEN_DIRECTIONS, QUEEN_DIRECTIONS_PLUS_CENTER, QUEEN_DIRECTIONS_ACYCLIC)
+            if pythagoras_cost_for_diag(g)
+                @test sort(unique(weights(g))) ≈ [0.0, 1.0, sqrt(2)]
+            else
+                @test sort(unique(weights(g))) ≈ [0.0, 1.0]
+            end
         end
     end
 end

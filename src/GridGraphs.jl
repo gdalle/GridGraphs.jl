@@ -1,11 +1,12 @@
 """
     GridGraphs
 
-A package for graphs defined by a grid of vertices.
+A package for graphs defined by a rectangular grid of vertices.
+
+GitHub repo: <https://github.com/gdalle/GridGraphs.jl>
 """
 module GridGraphs
 
-using Base: OneTo
 using DataStructures: BinaryHeap
 using FillArrays: Trues
 using Graphs: Graphs, AbstractGraph, Edge
@@ -15,16 +16,26 @@ using SparseArrays: SparseMatrixCSC, sparse, _show_with_braille_patterns
 
 include("directions.jl")
 include("grid_graph.jl")
-include("vertices_edges.jl")
-include("weights.jl")
+include("graphs_interface.jl")
 include("shortest_paths.jl")
 
-export GridDirection
+export GridDirection, get_tuple, get_direction
+export ROOK_DIRECTIONS,
+    ROOK_DIRECTIONS_PLUS_CENTER,
+    ROOK_DIRECTIONS_ACYCLIC,
+    QUEEN_DIRECTIONS,
+    QUEEN_DIRECTIONS_PLUS_CENTER,
+    QUEEN_DIRECTIONS_ACYCLIC
 export GridGraph
-export grid_topological_sort
-export grid_dijkstra
-export grid_bellman_ford
-export get_path
-export path_to_matrix
+export height,
+    width,
+    coord_to_index,
+    index_to_coord,
+    vertex_weight,
+    vertex_active,
+    has_direction,
+    edge_weight
+export grid_topological_sort,
+    grid_dijkstra, grid_bellman_ford, get_path, path_to_matrix, ShortestPathTree
 
 end

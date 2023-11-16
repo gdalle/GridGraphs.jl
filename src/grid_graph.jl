@@ -1,155 +1,193 @@
 """
     GridGraph{
-        T<:Integer,
         R<:Real,
         W<:AbstractMatrix{R},
-        A<:AbstractMatrix{Bool}
+        A<:AbstractMatrix{Bool},
+        D<:NTuple{<:Any,GridDirection}
     }
 
-Graph defined by a grid of vertices with index type `T`.
+Graph defined by a rectangular grid of vertices.
 
 # Fields
 
-- `weights::W`: vertex weights matrix, which serve to define edge weights.
-- `active::A`: vertex activity matrix. All the vertices on the grid exist, but only active vertices can have edges (inactive vertices are isolated).
-- `directions::Vector{GridDirection}`: the set of legal directions which are used to define edges.
-- `diag_through_corner::Bool`: defines how the weight of a diagonal edge is computed.
+- `vertex_weights::W`: Vertex weight matrix used to define edge weights.
+- `vertex_activities::A`: Vertex activity matrix. All the vertices on the grid exist, but only active vertices can have edges (inactive vertices are isolated, they correspond to obstacles).
+- `directions::D`: Set of legal directions used to define edges.
+- `nb_corners_for_diag::Int`: Number of active corner vertices necessary for a diagonal edge to exist. Can take the values `0`, `1` or `2`.
+- `pythagoras_cost_for_diag::Bool`: Whether the weight of a diagonal edge is computed using the shortest of the active corner paths (`true`) or just the weight of the arrival vertex (`false`).
 
-# See also
+# Constructors
 
-- [`edge_weight(g, s, d)`](@ref)
+There is a user-friendly constructor with the following default values:
+
+    GridGraph(
+        vertex_weights;
+        vertex_activities=Trues(size(weights)),
+        directions=ROOK_DIRECTIONS,
+        nb_corners_for_diag=0,
+        pythagoras_cost_for_diag=false
+    )
 """
-struct GridGraph{T<:Integer,R<:Real,W<:AbstractMatrix{R},A<:AbstractMatrix{Bool}} <:
-       AbstractGraph{T}
-    weights::W
-    active::A
-    directions::Vector{GridDirection}
-    diag_through_corner::Bool
+struct GridGraph{
+    R<:Real,W<:AbstractMatrix{R},A<:AbstractMatrix{Bool},D<:NTuple{<:Any,GridDirection}
+} <: AbstractGraph{Int}
+    vertex_weights::W
+    vertex_activities::A
+    directions::D
+    nb_corners_for_diag::Int
+    pythagoras_cost_for_diag::Bool
 
-    function GridGraph{T}(
-        weights::W, active::A, directions, diag_through_corner
-    ) where {T,R,W<:AbstractMatrix{R},A<:AbstractMatrix{Bool}}
-        return new{T,R,W,A}(
-            weights, active, sort(unique(directions)), Bool(diag_through_corner)
+    function GridGraph(
+        vertex_weights::W,
+        vertex_activities::A,
+        directions::D,
+        nb_corners_for_diag,
+        pythagoras_cost_for_diag,
+    ) where {W,A,D}
+        @assert size(vertex_weights) == size(vertex_activities)
+        @assert issorted(directions)
+        @assert nb_corners_for_diag in (0, 1, 2)
+        if pythagoras_cost_for_diag
+            @assert nb_corners_for_diag > 0
+        end
+        return new{eltype(W),W,A,D}(
+            vertex_weights,
+            vertex_activities,
+            directions,
+            nb_corners_for_diag,
+            pythagoras_cost_for_diag,
         )
     end
 end
 
-"""
-    GridGraph{T}(weights[; active, directions, diag_through_corner])
-
-User-friendly constructor.
-By default, all vertices are active, all directions are allowed, and edge weights are always computed based on the arrival vertex alone.
-"""
-function GridGraph{T}(
-    weights;
-    active=Trues(size(weights)),
-    directions=QUEEN_DIRECTIONS_PLUS_CENTER,
-    diag_through_corner=false,
-) where {T}
-    return GridGraph{T}(weights, active, directions, diag_through_corner)
-end
-
 function GridGraph(
-    weights;
-    active=Trues(size(weights)),
-    directions=QUEEN_DIRECTIONS,
-    diag_through_corner=false,
+    vertex_weights;
+    vertex_activities=Trues(size(vertex_weights)),
+    directions=ROOK_DIRECTIONS,
+    nb_corners_for_diag=0,
+    pythagoras_cost_for_diag=false,
 )
-    return GridGraph{Int}(weights, active, directions, diag_through_corner)
+    return GridGraph(
+        vertex_weights,
+        vertex_activities,
+        directions,
+        nb_corners_for_diag,
+        pythagoras_cost_for_diag,
+    )
 end
 
-## Basic functions
+## Attribute access
+
+vertex_weights(g::GridGraph) = g.vertex_weights
+vertex_activities(g::GridGraph) = g.vertex_activities
+directions(g::GridGraph) = g.directions
+nb_corners_for_diag(g::GridGraph) = g.nb_corners_for_diag
+pythagoras_cost_for_diag(g::GridGraph) = g.pythagoras_cost_for_diag
+
+## Size
 
 """
     height(g)
 
 Compute the height of the grid (number of rows).
 """
-height(g::GridGraph{T}) where {T} = convert(T, size(g.weights, 1))
+height(g::GridGraph) = size(vertex_weights(g), 1)
 
 """
     width(g)
 
 Compute the width of the grid (number of columns).
 """
-width(g::GridGraph{T}) where {T} = convert(T, size(g.weights, 2))
+width(g::GridGraph) = size(vertex_weights(g), 2)
 
-Base.eltype(::GridGraph{T}) where {T} = T
-Graphs.edgetype(::GridGraph{T}) where {T} = Edge{T}
-
-Graphs.is_directed(::GridGraph) = true
-Graphs.is_directed(::Type{<:GridGraph}) = true
-
-"""
-    active_vertex(g, v)
-
-Check if vertex `v` is active.
-"""
-active_vertex(g::GridGraph, v) = g.active[v]
-active_vertex_coord(g::GridGraph, i, j) = g.active[i, j]
-all_active(g::GridGraph) = all(isone, g.active)
-nb_active(g::GridGraph) = sum(g.active)
-fraction_active(g::GridGraph) = sum(g.active) / length(g.active)
-
-"""
-    has_direction(g, dir)
-
-Check if direction `dir` is a valid edge direction.
-"""
-has_direction(g::GridGraph, dir::GridDirection) = insorted(dir, g.directions)
-directions(g::GridGraph) = g.directions
-is_acyclic(g::GridGraph) = is_acyclic(directions(g))
-
-function has_direction_coord(g::GridGraph, Δi, Δj)
-    dir = get_direction(Δi, Δj)
-    if isnothing(dir)
-        return false
-    else
-        return has_direction(g, dir)
-    end
-end
-
-"""
-    diag_through_corner(g)
-
-Check if diagonal edge weights are computed using the corner vertices.
-"""
-diag_through_corner(g::GridGraph) = g.diag_through_corner
-
-"""
-    has_negative_weights(g)
-
-Check if any of the vertex weights are negative.
-
-By default this check is not included in Dijkstra's algorithm to save time.
-"""
-function has_negative_weights(g::GridGraph{T,R}) where {T,R}
-    return any(<(zero(R)), g.weights)
-end
+## Weights
 
 """
     vertex_weight(g, v)
 
 Retrieve the vertex weight associated with index `v`.
 """
-vertex_weight(g::GridGraph, v) = g.weights[v]
-vertex_weight_coord(g::GridGraph, i, j) = g.weights[i, j]
+vertex_weight(g::GridGraph, v) = vertex_weights(g)[v]
+vertex_weight_coord(g::GridGraph, i, j) = vertex_weights(g)[i, j]
+has_negative_weights(g::GridGraph) = minimum(vertex_weights(g)) < 0
+
+## Activity
+
+"""
+    vertex_active(g, v)
+
+Check if vertex `v` is active.
+"""
+vertex_active(g::GridGraph, v) = vertex_activities(g)[v]
+vertex_active_coord(g::GridGraph, i, j) = vertex_activities(g)[i, j]
+nb_active(g::GridGraph) = sum(vertex_activities(g))
+all_active(g::GridGraph) = nb_active(g) == length(vertex_activities(g))
+
+## Directions
+
+"""
+    has_direction(g, dir)
+
+Check if direction `dir` is a valid edge direction.
+"""
+has_direction(g::GridGraph, dir::GridDirection) = dir in directions(g)
+
+function has_direction_coord(g::GridGraph, Δi, Δj)
+    dir = get_direction(Δi, Δj)
+    return isnothing(dir) ? false : has_direction(g, dir)
+end
+
+is_acyclic(g::GridGraph) = is_acyclic(directions(g))
+
+## Indexing
+
+"""
+    coord_to_index(g, i, j)
+
+Convert a grid coordinate tuple `(i,j)` into the index `v` of the associated vertex.
+"""
+function coord_to_index(g::GridGraph, i, j)
+    h, w = height(g), width(g)
+    if (1 <= i <= h) && (1 <= j <= w)
+        v = (j - 1) * h + (i - 1) + 1  # enumerate column by column
+        return v
+    else
+        return 0
+    end
+end
+
+"""
+    index_to_coord(g, v)
+
+Convert a vertex index `v` into the tuple `(i,j)` of associated grid coordinates.
+"""
+function index_to_coord(g::GridGraph, v)
+    if has_vertex(g, v)
+        h = height(g)
+        j = (v - 1) ÷ h + 1
+        i = (v - 1) - h * (j - 1) + 1
+        return (i, j)
+    else
+        return (0, 0)
+    end
+end
 
 ## Pretty printing
 
-"""
-    Base.show(io, g)
-
-Display a GridGraph using braille patterns when not all vertices are active.
-"""
-function Base.show(io::IO, g::GridGraph{T,R,W,A}) where {T,R,W,A}
+function Base.show(io::IO, g::GridGraph{R,W,A}) where {R,W,A}
     print(
         io,
-        "GridGraph with $T vertices and $R weights.\nWeights matrix: $W\nActive matrix: $A\nDirections: $(g.directions)\nDiagonal through corner: $(g.diag_through_corner)\n",
+        """
+        GridGraph with size ($(height(g)), $(width(g))).
+        Weights matrix: $W
+        Active matrix: $A
+        Directions: $(directions(g))
+        Nb corners for diagonal: $(nb_corners_for_diag(g))
+        Pythagoras cost for diagonal: $(pythagoras_cost_for_diag(g))
+        """,
     )
-    if sum(g.active) < length(g.active)
-        _show_with_braille_patterns(io, SparseMatrixCSC(g.active))
+    if !all_active(g)
+        _show_with_braille_patterns(io, SparseMatrixCSC(vertex_activities(g)))
     end
     return nothing
 end
