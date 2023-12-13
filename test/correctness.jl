@@ -1,19 +1,7 @@
 using Graphs
 using GridGraphs
-using GridGraphs:
-    index_to_coord,
-    coord_to_index,
-    height,
-    width,
-    directions,
-    is_acyclic,
-    nb_corners_for_diag,
-    pythagoras_cost_for_diag,
-    slow_weights
-using Random
+using GridGraphs: directions, diag_corners, straight_cost, diag_cost
 using Test
-
-Random.seed!(63)
 
 #=
 Test grid
@@ -24,47 +12,31 @@ Test grid
 
 =#
 
-vertex_weights = ones(3, 4);
-vertex_activities = ones(Bool, 3, 4);
-vertex_activities[2, 3] = false;
-vertex_activities[3, 2] = false;
+activities = ones(Bool, 3, 4);
+activities[2, 3] = false;
+activities[3, 2] = false;
 
 graphs_to_test = GridGraph[]
 
 for directions in (
     ROOK_DIRECTIONS,
     ROOK_DIRECTIONS_PLUS_CENTER,
-    ROOK_DIRECTIONS_ACYCLIC,
     QUEEN_DIRECTIONS,
     QUEEN_DIRECTIONS_PLUS_CENTER,
-    QUEEN_DIRECTIONS_ACYCLIC,
 )
-    for nb_corners_for_diag in (0, 1, 2)
-        for pythagoras_cost_for_diag in (true, false)
-            try
-                g = GridGraph(
-                    vertex_weights;
-                    vertex_activities,
-                    directions,
-                    nb_corners_for_diag,
-                    pythagoras_cost_for_diag,
-                )
-                push!(graphs_to_test, g)
-            catch e
-                nothing
-            end
-        end
+    for diag_corners in (0, 1, 2)
+        g = GridGraph(size(activities)...; activities, directions, diag_corners)
+        push!(graphs_to_test, g)
     end
 end
 
 for g in graphs_to_test
     test_name = string(typeof(g))
     @testset "$test_name" begin
-        @info "Testing" g
         @test eltype(g) == Int
         @test edgetype(g) == Edge{Int}
-        @test is_directed(g)
-        @test is_directed(typeof(g))
+        @test !is_directed(g)
+        @test !is_directed(typeof(g))
 
         @test height(g) == 3
         @test width(g) == 4
@@ -92,30 +64,27 @@ for g in graphs_to_test
         @test !has_edge(g, 1, nv(g) + 1)
 
         g2 = deepcopy(g)
-        g2.vertex_activities .= true
+        g2.activities .= true
         @test ne(g2) == length(collect(edges(g2)))
 
         ## Diagonals
 
-        if directions(g) in
-            (ROOK_DIRECTIONS, ROOK_DIRECTIONS_PLUS_CENTER, ROOK_DIRECTIONS_ACYCLIC)
+        if directions(g) in (ROOK_DIRECTIONS, ROOK_DIRECTIONS_PLUS_CENTER)
             @test !has_edge(g, coord_to_index(g, 1, 1), coord_to_index(g, 2, 2))
-        elseif directions(g) in
-            (QUEEN_DIRECTIONS, QUEEN_DIRECTIONS_PLUS_CENTER, QUEEN_DIRECTIONS_ACYCLIC)
+        elseif directions(g) in (QUEEN_DIRECTIONS, QUEEN_DIRECTIONS_PLUS_CENTER)
             @test has_edge(g, coord_to_index(g, 1, 1), coord_to_index(g, 2, 2))
         end
 
         ## Hole
 
-        if directions(g) in
-            (QUEEN_DIRECTIONS, QUEEN_DIRECTIONS_PLUS_CENTER, QUEEN_DIRECTIONS_ACYCLIC)
-            if nb_corners_for_diag(g) == 0
+        if directions(g) in (QUEEN_DIRECTIONS, QUEEN_DIRECTIONS_PLUS_CENTER)
+            if diag_corners(g) == 0
                 @test has_edge(g, coord_to_index(g, 2, 2), coord_to_index(g, 3, 3)) # 0 corner
                 @test has_edge(g, coord_to_index(g, 1, 3), coord_to_index(g, 2, 4)) # 1 corner
-            elseif nb_corners_for_diag(g) == 1
+            elseif diag_corners(g) == 1
                 @test !has_edge(g, coord_to_index(g, 2, 2), coord_to_index(g, 3, 3)) # 0 corner
                 @test has_edge(g, coord_to_index(g, 1, 3), coord_to_index(g, 2, 4)) # 1 corner
-            elseif nb_corners_for_diag(g) == 2
+            elseif diag_corners(g) == 2
                 @test !has_edge(g, coord_to_index(g, 2, 2), coord_to_index(g, 3, 3)) # 0 corner
                 @test !has_edge(g, coord_to_index(g, 1, 3), coord_to_index(g, 2, 4)) # 1 corner
             end
@@ -123,15 +92,6 @@ for g in graphs_to_test
 
         ## Weights
 
-        @test slow_weights(g) == weights(g)
-
-        if directions(g) in
-            (QUEEN_DIRECTIONS, QUEEN_DIRECTIONS_PLUS_CENTER, QUEEN_DIRECTIONS_ACYCLIC)
-            if pythagoras_cost_for_diag(g)
-                @test sort(unique(weights(g))) ≈ [0.0, 1.0, sqrt(2)]
-            else
-                @test sort(unique(weights(g))) ≈ [0.0, 1.0]
-            end
-        end
+        @test sort(unique(weights(g))) == unique([0, straight_cost(g), diag_cost(g)])
     end
 end

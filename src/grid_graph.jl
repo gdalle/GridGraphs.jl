@@ -1,143 +1,83 @@
 """
-    GridGraph{
-        R<:Real,
-        W<:AbstractMatrix{R},
-        A<:AbstractMatrix{Bool},
-        D<:NTuple{<:Any,GridDirection}
-    }
+$(TYPEDEF)
 
 Graph defined by a rectangular grid of vertices.
 
 # Fields
 
-- `vertex_weights::W`: Vertex weight matrix used to define edge weights.
-- `vertex_activities::A`: Vertex activity matrix. All the vertices on the grid exist, but only active vertices can have edges (inactive vertices are isolated, they correspond to obstacles).
-- `directions::D`: Set of legal directions used to define edges.
-- `nb_corners_for_diag::Int`: Number of active corner vertices necessary for a diagonal edge to exist. Can take the values `0`, `1` or `2`.
-- `pythagoras_cost_for_diag::Bool`: Whether the weight of a diagonal edge is computed using the shortest of the active corner paths (`true`) or just the weight of the arrival vertex (`false`).
-
-# Constructors
-
-There is a user-friendly constructor with the following default values:
-
-    GridGraph(
-        vertex_weights;
-        vertex_activities=Trues(size(weights)),
-        directions=ROOK_DIRECTIONS,
-        nb_corners_for_diag=0,
-        pythagoras_cost_for_diag=false
-    )
+$(TYPEDFIELDS)
 """
-struct GridGraph{
-    R<:Real,W<:AbstractMatrix{R},A<:AbstractMatrix{Bool},D<:NTuple{<:Any,GridDirection}
-} <: AbstractGraph{Int}
-    vertex_weights::W
-    vertex_activities::A
+struct GridGraph{R<:Real,A<:AbstractMatrix{Bool},D<:NTuple{<:Any,GridDirection}} <:
+       AbstractGraph{Int}
+    "Number of rows in the grid."
+    height::Int
+    "Number of columns in the grid."
+    width::Int
+    "Active vertices can have edges, inactive vertices are isolated (they correspond to obstacles)."
+    activities::A
+    "Set of legal directions used to define edges."
     directions::D
-    nb_corners_for_diag::Int
-    pythagoras_cost_for_diag::Bool
-
-    function GridGraph(
-        vertex_weights::W,
-        vertex_activities::A,
-        directions::D,
-        nb_corners_for_diag,
-        pythagoras_cost_for_diag,
-    ) where {W,A,D}
-        @assert size(vertex_weights) == size(vertex_activities)
-        @assert issorted(directions)
-        @assert nb_corners_for_diag in (0, 1, 2)
-        if pythagoras_cost_for_diag
-            @assert nb_corners_for_diag > 0
-        end
-        return new{eltype(W),W,A,D}(
-            vertex_weights,
-            vertex_activities,
-            directions,
-            nb_corners_for_diag,
-            pythagoras_cost_for_diag,
-        )
-    end
+    "Cost of a straight edge."
+    straight_cost::R
+    "Cost of a diagonal edge."
+    diag_cost::R
+    "Number of active corner vertices necessary for a diagonal edge to exist (`0`, `1` or `2`)."
+    diag_corners::Int
 end
 
 function GridGraph(
-    vertex_weights;
-    vertex_activities=Trues(size(vertex_weights)),
+    height,
+    width;
+    activities=Trues(height, width),
     directions=ROOK_DIRECTIONS,
-    nb_corners_for_diag=0,
-    pythagoras_cost_for_diag=false,
+    straight_cost=1,
+    diag_cost=one(straight_cost),
+    diag_corners=0,
 )
     return GridGraph(
-        vertex_weights,
-        vertex_activities,
-        directions,
-        nb_corners_for_diag,
-        pythagoras_cost_for_diag,
+        height, width, activities, directions, straight_cost, diag_cost, diag_corners
     )
 end
 
 ## Attribute access
 
-vertex_weights(g::GridGraph) = g.vertex_weights
-vertex_activities(g::GridGraph) = g.vertex_activities
+height(g::GridGraph) = g.height
+width(g::GridGraph) = g.width
+activities(g::GridGraph) = g.activities
 directions(g::GridGraph) = g.directions
-nb_corners_for_diag(g::GridGraph) = g.nb_corners_for_diag
-pythagoras_cost_for_diag(g::GridGraph) = g.pythagoras_cost_for_diag
-
-## Size
-
-"""
-    height(g)
-
-Compute the height of the grid (number of rows).
-"""
-height(g::GridGraph) = size(vertex_weights(g), 1)
-
-"""
-    width(g)
-
-Compute the width of the grid (number of columns).
-"""
-width(g::GridGraph) = size(vertex_weights(g), 2)
-
-## Weights
-
-"""
-    vertex_weight(g, v)
-
-Retrieve the vertex weight associated with index `v`.
-"""
-vertex_weight(g::GridGraph, v) = vertex_weights(g)[v]
-vertex_weight_coord(g::GridGraph, i, j) = vertex_weights(g)[i, j]
-has_negative_weights(g::GridGraph) = minimum(vertex_weights(g)) < 0
+straight_cost(g::GridGraph) = g.straight_cost
+diag_cost(g::GridGraph) = g.diag_cost
+diag_corners(g::GridGraph) = g.diag_corners
 
 ## Activity
 
 """
     vertex_active(g, v)
+    vertex_active(g, i, j)
 
-Check if vertex `v` is active.
+Check if a vertex is active.
 """
-vertex_active(g::GridGraph, v) = vertex_activities(g)[v]
-vertex_active_coord(g::GridGraph, i, j) = vertex_activities(g)[i, j]
-nb_active(g::GridGraph) = sum(vertex_activities(g))
-all_active(g::GridGraph) = nb_active(g) == length(vertex_activities(g))
+vertex_active(g::GridGraph, v::Integer) = activities(g)[v]
+vertex_active(g::GridGraph, i::Integer, j::Integer) = activities(g)[i, j]
 
 ## Directions
 
 """
-    has_direction(g, dir)
+    direction_allowed(g, direction)
+    direction_allowed(g, Δi, Δj)
 
-Check if direction `dir` is a valid edge direction.
+Check if a direction is allowed for an edge.
 """
-has_direction(g::GridGraph, dir::GridDirection) = dir in directions(g)
+direction_allowed(g::GridGraph, dir::GridDirection) = dir in directions(g)
 
-function has_direction_coord(g::GridGraph, Δi, Δj)
-    dir = get_direction(Δi, Δj)
-    return isnothing(dir) ? false : has_direction(g, dir)
+function direction_allowed(g::GridGraph, Δi::Integer, Δj::Integer)
+    direction = get_direction(Δi, Δj)
+    if isnothing(direction)
+        return false
+    else
+        return direction_allowed(g, direction)
+    end
 end
-
-is_acyclic(g::GridGraph) = is_acyclic(directions(g))
 
 ## Indexing
 
@@ -146,7 +86,7 @@ is_acyclic(g::GridGraph) = is_acyclic(directions(g))
 
 Convert a grid coordinate tuple `(i,j)` into the index `v` of the associated vertex.
 """
-function coord_to_index(g::GridGraph, i, j)
+function coord_to_index(g::GridGraph, i::Integer, j::Integer)
     h, w = height(g), width(g)
     if (1 <= i <= h) && (1 <= j <= w)
         v = (j - 1) * h + (i - 1) + 1  # enumerate column by column
@@ -161,7 +101,7 @@ end
 
 Convert a vertex index `v` into the tuple `(i,j)` of associated grid coordinates.
 """
-function index_to_coord(g::GridGraph, v)
+function index_to_coord(g::GridGraph, v::Integer)
     if has_vertex(g, v)
         h = height(g)
         j = (v - 1) ÷ h + 1
@@ -174,20 +114,13 @@ end
 
 ## Pretty printing
 
-function Base.show(io::IO, g::GridGraph{R,W,A}) where {R,W,A}
+function Base.show(io::IO, g::GridGraph)
     print(
         io,
         """
-        GridGraph with size ($(height(g)), $(width(g))).
-        Weights matrix: $W
-        Active matrix: $A
-        Directions: $(directions(g))
-        Nb corners for diagonal: $(nb_corners_for_diag(g))
-        Pythagoras cost for diagonal: $(pythagoras_cost_for_diag(g))
+        GridGraph with size ($(height(g)), $(width(g))) and directions $(directions(g))
         """,
     )
-    if !all_active(g)
-        _show_with_braille_patterns(io, SparseMatrixCSC(vertex_activities(g)))
-    end
+    _show_with_braille_patterns(io, SparseMatrixCSC(activities(g)))
     return nothing
 end

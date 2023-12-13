@@ -9,10 +9,6 @@ They are based on an analogy with the game of chess:
 - `ROOK_DIRECTIONS`
 - `QUEEN_DIRECTIONS_PLUS_CENTER`
 - `ROOK_DIRECTIONS_PLUS_CENTER`
-- `QUEEN_DIRECTIONS_ACYCLIC`
-- `ROOK_DIRECTIONS_ACYCLIC`
-
-Acyclic direction sets give rise to an acyclic graph because they are contained in `{south, east, southeast}`.
 """
 @enum GridDirection northwest west southwest north center south northeast east southeast
 
@@ -39,7 +35,6 @@ function Base.show(io::IO, dir::GridDirection)
 end
 
 const ROOK_DIRECTIONS = (west, north, south, east)
-const ROOK_DIRECTIONS_ACYCLIC = (south, east)
 const ROOK_DIRECTIONS_PLUS_CENTER = (west, north, center, south, east)
 
 const QUEEN_DIRECTIONS = (
@@ -48,7 +43,6 @@ const QUEEN_DIRECTIONS = (
 const QUEEN_DIRECTIONS_PLUS_CENTER = (
     northwest, west, southwest, north, center, south, northeast, east, southeast
 )
-const QUEEN_DIRECTIONS_ACYCLIC = (south, east, southeast)
 
 """
     get_tuple(dir)
@@ -75,6 +69,7 @@ function get_tuple(dir::GridDirection)
     elseif dir == southeast
         return (+1, +1)
     end
+    return nothing
 end
 
 """
@@ -115,14 +110,3 @@ function Base.:+((i, j), dir::GridDirection)
     Δi, Δj = get_tuple(dir)
     return (i + Δi, j + Δj)
 end
-
-function Base.:-(dir::GridDirection)
-    Δi, Δj = get_tuple(dir)
-    return get_direction(-Δi, -Δj)
-end
-
-function Base.:-((i, j), dir::GridDirection)
-    return (i, j) + (-dir)
-end
-
-is_acyclic(directions) = issubset(directions, QUEEN_DIRECTIONS_ACYCLIC)
