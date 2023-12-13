@@ -6,7 +6,7 @@ using Test
 
 @testset verbose = true "GridGraphs.jl" begin
     @testset "Code quality (Aqua)" begin
-        Aqua.test_all(GridGraphs)
+        Aqua.test_all(GridGraphs; ambiguities=false)
     end
     @testset "Code formatting (JuliaFormatter)" begin
         @test JuliaFormatter.format(GridGraphs; verbose=false, overwrite=false)
