@@ -7,9 +7,9 @@ Graphs.is_directed(::Type{<:GridGraph}) = true
 Graphs.nv(g::GridGraph) = height(g) * width(g)
 Graphs.vertices(g::GridGraph) = 1:nv(g)
 
-Graphs.has_vertex(g::GridGraph, v) = 1 <= v <= nv(g)
+Graphs.has_vertex(g::GridGraph, v::Integer) = 1 <= v <= nv(g)
 
-function Graphs.has_edge(g::GridGraph, s, d)
+function Graphs.has_edge(g::GridGraph, s::Integer, d::Integer)
     if has_vertex(g, s) && has_vertex(g, d)
         is, js = index_to_coord(g, s)
         id, jd = index_to_coord(g, d)
@@ -19,12 +19,12 @@ function Graphs.has_edge(g::GridGraph, s, d)
     end
 end
 
-function Graphs.outneighbors(g::GridGraph, s)
+function Graphs.outneighbors(g::GridGraph, s::Integer)
     is, js = index_to_coord(g, s)
     return (coord_to_index(g, id, jd) for (id, jd) in outneighbors_coord(g, is, js))
 end
 
-function Graphs.inneighbors(g::GridGraph, d)
+function Graphs.inneighbors(g::GridGraph, d::Integer)
     id, jd = index_to_coord(g, d)
     return (coord_to_index(g, is, js) for (is, js) in inneighbors_coord(g, id, jd))
 end
@@ -34,25 +34,17 @@ function Graphs.edges(g::GridGraph)
 end
 
 function Graphs.ne(g::GridGraph)
-    if all_active(g)
-        if directions(g) == QUEEN_DIRECTIONS
-            return ne_queen(g)
-        elseif directions(g) == QUEEN_DIRECTIONS_PLUS_CENTER
-            return ne_queen(g) + nv(g)
-        elseif directions(g) == QUEEN_DIRECTIONS_ACYCLIC
-            return ne_queen_acyclic(g)
-        elseif directions(g) == ROOK_DIRECTIONS
-            return ne_rook(g)
-        elseif directions(g) == ROOK_DIRECTIONS_PLUS_CENTER
-            return ne_rook(g) + nv(g)
-        elseif directions(g) == ROOK_DIRECTIONS_ACYCLIC
-            return ne_rook_acyclic(g)
-        else
-            return ne_generic(g)
-        end
-    else
-        return ne_generic(g)
-    end
+    h, w = height(g), width(g)
+    @assert h >= 2 && w >= 2
+    inside_degree = 4
+    border_degree = is_torus(g) ? 4 : 3
+    corner_degree = is_torus(g) ? 4 : 2
+    return (
+        (h - 2) * (w - 2) * inside_degree +  # inside
+        2 * (h - 2) * border_degree +  # vertical borders without corners
+        2 * (w - 2) * border_degree +  # horizontal borders without corners
+        4 * corner_degree  # corners
+    )
 end
 
 function Graphs.weights(g::GridGraph{R}) where {R}
@@ -75,44 +67,61 @@ end
 
 ## Coord functions
 
-has_vertex_coord(g::GridGraph, i, j) = 1 <= i <= height(g) && 1 <= j <= width(g)
+function has_vertex_coord(g::GridGraph, i::Integer, j::Integer)
+    return 1 <= i <= height(g) && 1 <= j <= width(g)
+end
 
-function has_edge_coord(g::GridGraph, is, js, id, jd; check_direction=true)
+function has_edge_coord(g::GridGraph, is::Integer, js::Integer, id::Integer, jd::Integer)
+    h, w = height(g), width(g)
     if !has_vertex_coord(g, is, js) || !has_vertex_coord(g, id, jd)
         return false
-    elseif !vertex_active_coord(g, is, js) || !vertex_active_coord(g, id, jd)
-        return false
+    elseif is_torus(g)
+        i_ok = id == is || (
+            if is == 1
+                id == 2 || id == h
+            elseif is == h
+                id == h - 1 || id == 1
+            else
+                id == is - 1 || id == is + 1
+            end
+        )
+        j_ok = jd == js || (
+            if js == 1
+                jd == 2 || jd == w
+            elseif js == w
+                jd == w - 1 || jd == 1
+            else
+                jd == js - 1 || jd == js + 1
+            end
+        )
+        return i_ok && j_ok && (id == is || jd == js)
     else
-        if check_direction && !has_direction_coord(g, id - is, jd - js)  # invalid direction
-            return false
-        elseif (is == id) || (js == jd)  # same column or row
-            return true
-        elseif nb_corners_for_diag(g) == 0
-            return true
-        elseif nb_corners_for_diag(g) == 1
-            return vertex_active_coord(g, is, jd) || vertex_active_coord(g, id, js)
-        elseif nb_corners_for_diag(g) == 2
-            return vertex_active_coord(g, is, jd) && vertex_active_coord(g, id, js)
-        end
+        return abs(id - is) + abs(jd - js) == 1
     end
 end
 
-function outneighbors_coord(g::GridGraph, is, js)
+function outneighbors_coord(g::GridGraph, is::Integer, js::Integer)
+    h, w = height(g), width(g)
+    @assert has_vertex_coord(g, is, js)
     # directions are listed in column major order
-    candidates = ((is, js) + dir for dir in directions(g))
-    return (
-        (id, jd) for
-        (id, jd) in candidates if has_edge_coord(g, is, js, id, jd; check_direction=false)
-    )
+    candidates = Ref((is, js)) .+ instances(GridDirection)
+    if is_torus(g)
+        return ((mod1(id, h), mod1(jd, w)) for (id, jd) in candidates)
+    else
+        return ((id, jd) for (id, jd) in candidates if has_vertex_coord(g, id, jd))
+    end
 end
 
-function inneighbors_coord(g::GridGraph, id, jd)
+function inneighbors_coord(g::GridGraph, id::Integer, jd::Integer)
+    h, w = height(g), width(g)
+    @assert has_vertex_coord(g, id, jd)
     # directions are listed in column major order
-    candidates = ((id, jd) - dir for dir in reverse(directions(g)))
-    return (
-        (is, js) for
-        (is, js) in candidates if has_edge_coord(g, is, js, id, jd; check_direction=false)
-    )
+    candidates = Ref((id, jd)) .- reverse(instances(GridDirection))
+    if is_torus(g)
+        return ((mod1(is, h), mod1(js, w)) for (is, js) in candidates)
+    else
+        return ((is, js) for (is, js) in candidates if has_vertex_coord(g, is, js))
+    end
 end
 
 ## Weights
@@ -124,112 +133,4 @@ Compute the weight of the edge from `s` to `d`.
 
 Only use this on edges that are guaranteed to exist.
 """
-function edge_weight(g::GridGraph, s, d)
-    if pythagoras_cost_for_diag(g)
-        return edge_weight_corner(g, s, d)
-    else
-        return vertex_weight(g, d)
-    end
-end
-
-function edge_weight_corner(g::GridGraph{R}, s, d) where {R}
-    d_weight = vertex_weight(g, d)
-    is, js = index_to_coord(g, s)
-    id, jd = index_to_coord(g, d)
-    if (is == id) || (js == jd)  # same row or column
-        weight = d_weight
-    else  # go through the cheapest corner and use Pythagoras
-        weight = typemax(R)
-        if vertex_active_coord(g, id, js)  # try first corner
-            c_weight = vertex_weight_coord(g, id, js)
-            weight = min(weight, convert(R, sqrt(c_weight^2 + d_weight^2)))
-        end
-        if vertex_active_coord(g, is, jd)  # try second corner
-            c_weight = vertex_weight_coord(g, is, jd)
-            weight = min(weight, convert(R, sqrt(c_weight^2 + d_weight^2)))
-        end
-    end
-    return weight
-end
-
-## Edge counting
-
-function ne_generic(g::GridGraph)
-    counter = 0
-    for u in vertices(g)
-        for _ in outneighbors(g, u)
-            counter += 1
-        end
-    end
-    return counter
-end
-
-function ne_queen(g::GridGraph)
-    h, w = height(g), width(g)
-    @assert h >= 2 && w >= 2
-    return (
-        (h - 2) * (w - 2) * 8 +  # center
-        2 * (h - 2) * 5 +  # vertical borders
-        2 * (w - 2) * 5 +  # horizontal borders
-        4 * 3  # corners
-    )
-end
-
-function ne_queen_acyclic(g::GridGraph)
-    h, w = height(g), width(g)
-    @assert h >= 2 && w >= 2
-    return (
-        (h - 2) * (w - 2) * 3 +  # center
-        (h - 2) * 3 +  # left border
-        (h - 2) * 1 +  # right border
-        (w - 2) * 3 +  # top border
-        (w - 2) * 1 +  # bottom border
-        3 +  # top left corner
-        1 +  # top right corner
-        1 +  # bottom left corner
-        0  # bottom right corner
-    )
-end
-
-function ne_rook(g::GridGraph)
-    h, w = height(g), width(g)
-    @assert h >= 2 && w >= 2
-    return (
-        (h - 2) * (w - 2) * 4 +  # center
-        2 * (h - 2) * 3 +  # vertical borders
-        2 * (w - 2) * 3 +  # horizontal borders
-        4 * 2  # corners
-    )
-end
-
-function ne_rook_acyclic(g::GridGraph)
-    h, w = height(g), width(g)
-    @assert h >= 2 && w >= 2
-    return (
-        (h - 2) * (w - 2) * 2 +  # center
-        (h - 2) * 2 +  # left border
-        (h - 2) * 1 +  # right border
-        (w - 2) * 2 +  # top border
-        (w - 2) * 1 +  # bottom border
-        2 +  # top left corner
-        1 +  # top right corner
-        1 +  # bottom left corner
-        0  # bottom right corner
-    )
-end
-
-## Slow weights
-
-function slow_weights(g::GridGraph{R}) where {R}
-    E = ne(g)
-    I = Vector{Int}(undef, E)
-    J = Vector{Int}(undef, E)
-    V = Vector{R}(undef, E)
-    for (k, ed) in enumerate(edges(g))
-        s, d = src(ed), dst(ed)
-        I[k] = d
-        J[k] = s
-        V[k] = edge_weight(g, s, d)
-    end
-    return transpose(sparse(I, J, V, nv(g), nv(g)))
-end
+edge_weight(g::GridGraph, s::Integer, d::Integer) = vertex_weight(g, d)
