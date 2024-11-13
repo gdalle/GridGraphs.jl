@@ -9,7 +9,7 @@ using FillArrays: Trues
 using Graphs: Graphs, AbstractGraph, Edge
 using Graphs: nv, ne, vertices, edges, has_vertex, has_edge
 using Graphs: inneighbors, outneighbors, src, dst
-using SparseArrays: SparseMatrixCSC
+using SparseArrays: SparseMatrixCSC, sparse
 
 include("directions.jl")
 include("grid_graph.jl")

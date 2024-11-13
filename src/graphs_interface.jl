@@ -48,21 +48,12 @@ function Graphs.ne(g::GridGraph)
 end
 
 function Graphs.weights(g::GridGraph{R}) where {R}
-    V, E = nv(g), ne(g)
-    colptr = Vector{Int}(undef, V + 1)
-    rowval = Vector{Int}(undef, E)
-    nzval = Vector{R}(undef, E)
-    k = 1
-    for s in vertices(g)
-        colptr[s] = k
-        for d in outneighbors(g, s)
-            rowval[k] = d
-            nzval[k] = edge_weight(g, s, d)
-            k += 1
-        end
-    end
-    colptr[end] = k
-    return transpose(SparseMatrixCSC(V, V, colptr, rowval, nzval))
+    n = nv(g)
+    E = edges(g)
+    I = src.(E)
+    J = dst.(E)
+    W = edge_weight.(Ref(g), I, J)
+    return sparse(I, J, W, n, n)
 end
 
 ## Coord functions
@@ -73,9 +64,8 @@ end
 
 function has_edge_coord(g::GridGraph, is::Integer, js::Integer, id::Integer, jd::Integer)
     h, w = height(g), width(g)
-    if !has_vertex_coord(g, is, js) || !has_vertex_coord(g, id, jd)
-        return false
-    elseif is_torus(g)
+    @assert has_vertex_coord(g, is, js) && has_vertex_coord(g, id, jd)
+    if is_torus(g)
         i_ok = id == is || (
             if is == 1
                 id == 2 || id == h

@@ -3,11 +3,11 @@ using GridGraphs
 using GridGraphs: index_to_coord, coord_to_index, height, width
 using Test
 
-vertex_weights = float.(reshape(1:12, 3, 4));
+vwm = float.(reshape(1:12, 3, 4));
 
-graphs_to_test = [GridGraph(vertex_weights; torus) for torus in (true, false)]
-
-g = graphs_to_test[1]
+graphs_to_test = [
+    GridGraph(vwm; torus=true), GridGraph(vwm; torus=false), GridGraph(3, 4; torus=true)
+]
 
 @testset "$(typeof(g))" for g in graphs_to_test
     @test eltype(g) == Int
@@ -41,7 +41,14 @@ g = graphs_to_test[1]
     @test !has_edge(g, nv(g), 1)
     @test !has_edge(g, 1, nv(g) + 1)
 
-    ## Diagonals
+    ## Neighbors
+    @test all(all(has_vertex(g, d) for d in outneighbors(g, s)) for s in vertices(g))
+    @test all(all(has_vertex(g, s) for s in inneighbors(g, d)) for d in vertices(g))
 
+    ## Diagonals
     @test !has_edge(g, coord_to_index(g, 1, 1), coord_to_index(g, 2, 2))
+
+    ## Weights
+    wm = weights(g)
+    @test all(wm[src(e), dst(e)] == edge_weight(g, src(e), dst(e)) for e in edges(g))
 end
