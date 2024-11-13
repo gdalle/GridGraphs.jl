@@ -1,19 +1,20 @@
 using Aqua
 using GridGraphs
+using JET
 using JuliaFormatter
 using Test
 
 @testset verbose = true "GridGraphs.jl" begin
-    @testset "Code quality (Aqua)" begin
+    @testset "Code quality" begin
         Aqua.test_all(GridGraphs; ambiguities=false)
     end
-    @testset "Code formatting (JuliaFormatter)" begin
+    @testset "Code formatting" begin
         @test format(GridGraphs; verbose=false, overwrite=false)
     end
-    @testset "Correctness" begin
-        include("correctness.jl")
+    @testset "Code linting" begin
+        JET.test_package(GridGraphs; target_defined_modules=true)
     end
-    @testset "Shortest paths" begin
-        include("shortest_paths.jl")
+    @testset verbose = true "Correctness" begin
+        include("correctness.jl")
     end
 end

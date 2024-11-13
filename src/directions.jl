@@ -1,54 +1,9 @@
 """
     GridDirection
 
-Enum type for the 9 possible move directions on a 2-dimensional grid with square cells: `northwest`, `west`, `southwest`, `north`, `center`, `south`, `northeast`, `east`, `southeast`.
-
-Various subsets of these directions are defined as constants.
-They are based on an analogy with the game of chess:
-- `QUEEN_DIRECTIONS`
-- `ROOK_DIRECTIONS`
-- `QUEEN_DIRECTIONS_PLUS_CENTER`
-- `ROOK_DIRECTIONS_PLUS_CENTER`
-- `QUEEN_DIRECTIONS_ACYCLIC`
-- `ROOK_DIRECTIONS_ACYCLIC`
-
-Acyclic direction sets give rise to an acyclic graph because they are contained in `{south, east, southeast}`.
+Enum type for the 4 possible move directions on a 2-dimensional grid with square cells: `west`, `north`, `south`, `east`.
 """
-@enum GridDirection northwest west southwest north center south northeast east southeast
-
-function Base.show(io::IO, dir::GridDirection)
-    if dir == northwest
-        print(io, "NW")
-    elseif dir == west
-        print(io, "W")
-    elseif dir == southwest
-        print(io, "SW")
-    elseif dir == north
-        print(io, "N")
-    elseif dir == center
-        print(io, "C")
-    elseif dir == south
-        print(io, "S")
-    elseif dir == northeast
-        print(io, "NE")
-    elseif dir == east
-        print(io, "E")
-    elseif dir == southeast
-        print(io, "SE")
-    end
-end
-
-const ROOK_DIRECTIONS = (west, north, south, east)
-const ROOK_DIRECTIONS_ACYCLIC = (south, east)
-const ROOK_DIRECTIONS_PLUS_CENTER = (west, north, center, south, east)
-
-const QUEEN_DIRECTIONS = (
-    northwest, west, southwest, north, south, northeast, east, southeast
-)
-const QUEEN_DIRECTIONS_PLUS_CENTER = (
-    northwest, west, southwest, north, center, south, northeast, east, southeast
-)
-const QUEEN_DIRECTIONS_ACYCLIC = (south, east, southeast)
+@enum GridDirection west north south east
 
 """
     get_tuple(dir)
@@ -56,24 +11,14 @@ const QUEEN_DIRECTIONS_ACYCLIC = (south, east, southeast)
 Translate a `GridDirection` into a couple of grid steps in `{±1,0}`.
 """
 function get_tuple(dir::GridDirection)
-    if dir == northwest
-        return (-1, -1)
-    elseif dir == west
+    if dir == west
         return (0, -1)
-    elseif dir == southwest
-        return (+1, -1)
     elseif dir == north
         return (-1, 0)
-    elseif dir == center
-        return (0, 0)
     elseif dir == south
         return (+1, 0)
-    elseif dir == northeast
-        return (-1, +1)
-    elseif dir == east
+    else  # dir == east
         return (0, +1)
-    elseif dir == southeast
-        return (+1, +1)
     end
 end
 
@@ -82,36 +27,19 @@ end
 
 Translate a couple of grid steps in `{±1,0}` into a `GridDirection`.
 """
-function get_direction(Δi, Δj)
-    if Δj == -1
-        if Δi == -1
-            return northwest
-        elseif Δi == 0
-            return west
-        elseif Δi == 1
-            return southwest
-        end
-    elseif Δj == 0
-        if Δi == -1
-            return north
-        elseif Δi == 0
-            return center
-        elseif Δi == 1
-            return south
-        end
-    elseif Δj == 1
-        if Δi == -1
-            return northeast
-        elseif Δi == 0
-            return east
-        elseif Δi == 1
-            return southeast
-        end
+function get_direction(Δi::Integer, Δj::Integer)
+    if Δi == 0 && Δj == -1
+        return west
+    elseif Δi == -1 && Δj == 0
+        return north
+    elseif Δi == 1 && Δj == 0
+        return south
+    else  # Δi == 0 && Δj == 1
+        return east
     end
-    return nothing
 end
 
-function Base.:+((i, j), dir::GridDirection)
+function Base.:+((i, j)::NTuple{2,Integer}, dir::GridDirection)
     Δi, Δj = get_tuple(dir)
     return (i + Δi, j + Δj)
 end
@@ -121,8 +49,6 @@ function Base.:-(dir::GridDirection)
     return get_direction(-Δi, -Δj)
 end
 
-function Base.:-((i, j), dir::GridDirection)
+function Base.:-((i, j)::NTuple{2,Integer}, dir::GridDirection)
     return (i, j) + (-dir)
 end
-
-is_acyclic(directions) = issubset(directions, QUEEN_DIRECTIONS_ACYCLIC)
