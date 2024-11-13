@@ -5,14 +5,12 @@ Directed graph defined by a rectangular grid of vertices.
 
 # Constructors
 
-    GridGraph(vertex_weights; torus=false)
+    GridGraph(vertex_weights::AbstractMatrix; torus=false)
+    GridGraph(nrows::Integer, ncolumns::Integer; torus=false)
 
-- `vertex_weights::AbstractMatrix`: vertex weight matrix used to define edge weights.
-- `torus::Bool`: whether the grid wraps around at the borders.
-
-    GridGraph(nrows, ncolumns; torus=false)
-
-- `nrows` and `ncolumns`: size of the grid (assumes homogeneous vertex weights)
+- `vertex_weights`: vertex weight matrix used to define edge weights.
+- `nrows` and `ncolumns`: size of the grid (used to create `vertex_weights` identically equal to `1`)
+- `torus`: whether the grid wraps around at the borders.
 """
 struct GridGraph{R,W<:AbstractMatrix{R},torus} <: AbstractGraph{Int}
     vertex_weights::W
