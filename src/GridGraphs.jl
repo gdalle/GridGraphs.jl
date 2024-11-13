@@ -16,7 +16,6 @@ include("grid_graph.jl")
 include("graphs_interface.jl")
 
 export GridGraph
-export height,
-    width, coord_to_index, index_to_coord, vertex_weight, vertex_weight_coord, edge_weight
+export height, width, coord_to_index, index_to_coord, vertex_weight, edge_weight
 
 end

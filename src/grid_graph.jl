@@ -68,13 +68,6 @@ Retrieve the vertex weight associated with index `v`.
 """
 vertex_weight(g::GridGraph, v::Integer) = vertex_weights(g)[v]
 
-"""
-    vertex_weight_coord(g, i, j)
-
-Retrieve the vertex weight associated with coordinates `(i, j)`.
-"""
-vertex_weight_coord(g::GridGraph, i::Integer, j::Integer) = vertex_weights(g)[i, j]
-
 ## Indexing
 
 """
