@@ -48,6 +48,7 @@ function Graphs.ne(g::GridGraph)
 end
 
 function Graphs.weights(g::GridGraph{R}) where {R}
+    # TODO: speed things up
     n = nv(g)
     E = edges(g)
     I = src.(E)

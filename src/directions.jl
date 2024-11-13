@@ -17,7 +17,7 @@ function get_tuple(dir::GridDirection)
         return (-1, 0)
     elseif dir == south
         return (+1, 0)
-    elseif dir == east
+    else  # dir == east
         return (0, +1)
     end
 end
@@ -34,10 +34,9 @@ function get_direction(Δi::Integer, Δj::Integer)
         return north
     elseif Δi == 1 && Δj == 0
         return south
-    elseif Δi == 0 && Δj == 1
+    else  # Δi == 0 && Δj == 1
         return east
     end
-    return nothing
 end
 
 function Base.:+((i, j)::NTuple{2,Integer}, dir::GridDirection)
