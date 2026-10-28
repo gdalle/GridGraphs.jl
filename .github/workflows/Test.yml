@@ -34,3 +34,21 @@ jobs:
           files: lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  jet:
+    name: JET
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v3
+      - name: Run JET.test_package
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          Pkg.activate(; temp=true)
+          Pkg.develop(; path=".")
+          Pkg.add("JET")
+          using JET, GridGraphs
+          JET.test_package(GridGraphs; target_modules=(GridGraphs,))
