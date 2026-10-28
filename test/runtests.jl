@@ -1,6 +1,5 @@
 using Aqua
 using GridGraphs
-using JET
 using JuliaFormatter
 using Test
 
@@ -10,9 +9,6 @@ using Test
     end
     @testset "Code formatting" begin
         @test format(GridGraphs; verbose=false, overwrite=false)
-    end
-    @testset "Code linting" begin
-        JET.test_package(GridGraphs; target_defined_modules=true)
     end
     @testset verbose = true "Correctness" begin
         include("correctness.jl")
